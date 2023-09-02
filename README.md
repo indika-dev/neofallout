@@ -7,7 +7,7 @@ This is a personal project for rewriting the Fallout 1/2 game engine in Rust. It
 
 The following steps will be made:
 - [ ] rewrite source code from fallout2-ce to Rust -> Fallout 2 should be fully playable
-- [ ] add support for loading maps and other data from Fallout 1 -> Fallout 1 should be fully playable by this game engine, too
+- [ ] add support for loading maps and other data from Fallout 1 -> Fallout 1 should be fully playable by this game engine, too (like in [Fallout 1 in 2](https://github.com/rotators/Fo1in2))
 - [ ] ensure modding and HighRes support based on Fallout 2 mods and for Fallout 1
 
 I named this project **neofallout** because I want to take the fallout 1/2 game engine to a new level like neovim did to vim.
