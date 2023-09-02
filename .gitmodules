@@ -1,0 +1,3 @@
+[submodule "fallout2-ce"]
+	path = fallout2-ce
+	url = https://github.com/indika-dev/fallout2-ce.git
