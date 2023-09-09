@@ -1,3 +1,4 @@
 /target
 fallout2-ce/build
+src/bindings*.rs
 
