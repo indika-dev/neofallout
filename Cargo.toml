@@ -10,3 +10,4 @@ cmake = "0.1"
 bindgen = "0.66.1"
 
 [dependencies]
+wasmer = "4.2.0"
