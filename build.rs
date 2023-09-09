@@ -17,19 +17,50 @@ fn main() {
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=build.rs");
 
-    // env::set_var("BINDGEN_EXTRA_CLANG_ARGS", "-x c++ -I /usr/include/SDL2");
+    // Write the bindings to the $OUT_DIR/bindings.rs file.
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    add_art_h_to_bindings(out_path);
+}
 
+fn assign_defaults(builder: bindgen::Builder) -> bindgen::Builder {
+    let builder_with_defaults = builder
+        // Tell cargo to invalidate the built crate whenever any of the
+        // included header files changed.
+        .default_enum_style(bindgen::EnumVariation::Rust {
+            non_exhaustive: true,
+        })
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .prepend_enum_name(false)
+        .disable_name_namespacing()
+        .clang_arg("-x")
+        .clang_arg("c++")
+        .clang_arg("-I")
+        .clang_arg("/usr/include/SDL2")
+        .clang_arg("-fparse-all-comments");
+    builder_with_defaults
+}
+
+fn write_bindings(sourcefile: &str, builder: bindgen::Builder, out_path: PathBuf) {
+    let bindings = assign_defaults(builder)
+        .generate()
+        .expect("Unable to generate bindings");
+    bindings
+        .write_to_file(out_path.join(String::from("bindings_") + sourcefile + ".rs"))
+        .expect("Couldn't write bindings!");
+    bindings
+        .write_to_file(String::from("src/bindings_") + sourcefile + ".rs")
+        .expect("Couldn't write bindings!");
+}
+
+fn add_art_h_to_bindings(out_path: PathBuf) {
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
     // the resulting bindings.
-    let bindings = bindgen::Builder::default()
+    let builder = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
         // .header("wrapper.h")
         .header("fallout2-ce/src/art.h")
-        .default_enum_style(bindgen::EnumVariation::Rust {
-            non_exhaustive: true,
-        })
         .allowlist_type("fallout::DudeNativeLook")
         .allowlist_type("fallout::FrmImage")
         .allowlist_type("fallout::ArtFrame")
@@ -72,28 +103,6 @@ fn main() {
         .allowlist_function("fallout::buildFid")
         .allowlist_function("fallout::artLoad")
         .allowlist_function("fallout::artRead")
-        .allowlist_function("fallout::artWrite")
-        // Tell cargo to invalidate the built crate whenever any of the
-        // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        .prepend_enum_name(false)
-        .disable_name_namespacing()
-        .clang_arg("-x")
-        .clang_arg("c++")
-        .clang_arg("-I")
-        .clang_arg("/usr/include/SDL2")
-        .clang_arg("-fparse-all-comments")
-        // Finish the builder and generate the bindings.
-        .generate()
-        // Unwrap the Result and panic on failure.
-        .expect("Unable to generate bindings");
-
-    // Write the bindings to the $OUT_DIR/bindings.rs file.
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
-    bindings
-        .write_to_file("src/bindings.rs")
-        .expect("Couldn't write bindings!");
+        .allowlist_function("fallout::artWrite");
+    write_bindings("art_h", builder, out_path);
 }
