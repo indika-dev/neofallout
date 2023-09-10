@@ -3,6 +3,20 @@ name = "neofallout"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata.bundle]
+name = "neofallout"
+identifier = "com.neofallout.neofallout"
+# icon = ["assets/neovide.ico"]
+version = "0.1.0"
+resources = []
+copyright = "Copyright (c) neofallout Contributors 2023. All rights reserved."
+category = "Productivity"
+short_description = "a new implementation of Fallout 1/2 game engine"
+long_description = """
+New implementation of Fallout 1/2 game engine in Rust. Includes relevant sfall parts, more modding capabilities and Mods as WebAsm-packets.
+"""
+osx_minimum_system_version = "10.11"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
