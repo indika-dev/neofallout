@@ -29,6 +29,18 @@ fn main() {
     add_draw_h_to_bindings(&out_path);
     add_endgame_h_to_bindings(&out_path);
     add_game_h_to_bindings(&out_path);
+    add_game_mouse_h_to_bindings(&out_path);
+    add_game_movie_h_to_bindings(&out_path);
+    add_game_sound_h_to_bindings(&out_path);
+    add_input_h_to_bindings(&out_path);
+    // add_kb_h_to_bindings(&out_path);
+    add_loadsave_h_to_bindings(&out_path);
+    add_mainmenu_h_to_bindings(&out_path);
+    add_object_h_to_bindings(&out_path);
+    add_palette_h_to_bindings(&out_path);
+    add_platform_compat_h_to_bindings(&out_path);
+    add_preferences_h_to_bindings(&out_path);
+    add_proto_h_to_bindings(&out_path);
 }
 
 fn assign_defaults(builder: bindgen::Builder) -> bindgen::Builder {
@@ -59,6 +71,467 @@ fn write_bindings(sourcefile: &str, builder: &bindgen::Builder, out_path: PathBu
     bindings
         .write_to_file(String::from("src/bindings_") + sourcefile + ".rs")
         .expect("Couldn't write bindings!");
+}
+
+fn add_proto_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/proto.h")
+        .allowlist_type("fallout::ItemDataMember")
+        .allowlist_type("fallout::CritterDataMember")
+        .allowlist_type("fallout::SceneryDataMember")
+        .allowlist_type("fallout::WallDataMember")
+        .allowlist_type("fallout::MiscDataMember")
+        .allowlist_type("fallout::ProtoDataMemberType")
+        .allowlist_type("fallout::ProtoDataMemberValue")
+        .allowlist_type("fallout::PrototypeMessage")
+        .allowlist_function("fallout::proto_make_path")
+        .allowlist_function("fallout::_proto_list_str")
+        .allowlist_function("fallout::proto_size")
+        .allowlist_function("fallout::_proto_action_can_use")
+        .allowlist_function("fallout::_proto_action_can_use_on")
+        .allowlist_function("fallout::_proto_action_can_talk_to")
+        .allowlist_function("fallout::_proto_action_can_pickup")
+        .allowlist_function("fallout::protoGetMessage")
+        .allowlist_function("fallout::protoGetName")
+        .allowlist_function("fallout::protoGetDescription")
+        .allowlist_function("fallout::proto_item_init")
+        .allowlist_function("fallout::proto_item_subdata_init")
+        .allowlist_function("fallout::proto_critter_init")
+        .allowlist_function("fallout::objectDataReset")
+        .allowlist_function("fallout::objectDataRead")
+        .allowlist_function("fallout::objectDataWrite")
+        .allowlist_function("fallout::_proto_update_init")
+        .allowlist_function("fallout::_proto_dude_update_gender")
+        .allowlist_function("fallout::_proto_dude_init")
+        .allowlist_function("fallout::proto_scenery_init")
+        .allowlist_function("fallout::proto_scenery_subdata_init")
+        .allowlist_function("fallout::proto_wall_init")
+        .allowlist_function("fallout::proto_tile_init")
+        .allowlist_function("fallout::proto_misc_init")
+        .allowlist_function("fallout::proto_copy_proto")
+        .allowlist_function("fallout::proto_is_subtype")
+        .allowlist_function("fallout::protoGetDataMember")
+        .allowlist_function("fallout::protoInit")
+        .allowlist_function("fallout::protoReset")
+        .allowlist_function("fallout::protoExit")
+        .allowlist_function("fallout::_proto_save_pid")
+        .allowlist_function("fallout::proto_new")
+        .allowlist_function("fallout::_proto_remove_all")
+        .allowlist_function("fallout::protoGetProto")
+        .allowlist_function("fallout::_ResetPlayer")
+        .allowlist_function("fallout::proto_max_id")
+        .allowlist_function("fallout::isExitGridPid");
+    write_bindings("proto_h", &builder, out_path.clone());
+    return builder;
+    // extern char _cd_path_base[COMPAT_MAX_PATH];
+    // extern MessageList gProtoMessageList;
+    // extern char* _proto_none_str;
+}
+
+fn add_preferences_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/preferences.h")
+        .allowlist_function("fallout::preferencesInit")
+        .allowlist_function("fallout::doPreferences")
+        .allowlist_function("fallout::preferencesSave")
+        .allowlist_function("fallout::preferencesLoad")
+        .allowlist_function("fallout::brightnessIncrease")
+        .allowlist_function("fallout::brightnessDecrease");
+    write_bindings("preferences_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_platform_compat_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/platform_compat.h")
+        .allowlist_function("fallout::compat_stricmp")
+        .allowlist_function("fallout::compat_strnicmp")
+        .allowlist_function("fallout::compat_strupr")
+        .allowlist_function("fallout::compat_strlwr")
+        .allowlist_function("fallout::compat_itoa")
+        .allowlist_function("fallout::compat_splitpath")
+        .allowlist_function("fallout::compat_makepath")
+        .allowlist_function("fallout::compat_tell")
+        .allowlist_function("fallout::compat_filelength")
+        .allowlist_function("fallout::compat_mkdir")
+        .allowlist_function("fallout::compat_timeGetTime")
+        .allowlist_function("fallout::compat_fopen")
+        .allowlist_function("fallout::compat_gzopen")
+        .allowlist_function("fallout::compat_fgets")
+        .allowlist_function("fallout::compat_gzgets")
+        .allowlist_function("fallout::compat_remove")
+        .allowlist_function("fallout::compat_rename")
+        .allowlist_function("fallout::compat_windows_path_to_native")
+        .allowlist_function("fallout::compat_resolve_path")
+        .allowlist_function("fallout::compat_access")
+        .allowlist_function("fallout::compat_strdup")
+        .allowlist_function("fallout::getFileSize");
+    write_bindings("platform_compat_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_palette_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/palette.h")
+        .allowlist_function("fallout::paletteInit")
+        .allowlist_function("fallout::paletteReset")
+        .allowlist_function("fallout::paletteExit")
+        .allowlist_function("fallout::paletteFadeTo")
+        .allowlist_function("fallout::paletteSetEntries")
+        .allowlist_function("fallout::paletteSetEntriesInRange");
+    write_bindings("palette_h", &builder, out_path.clone());
+    return builder;
+
+    // extern unsigned char gPaletteWhite[256 * 3];
+    // extern unsigned char gPaletteBlack[256 * 3];
+}
+
+fn add_object_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/mainmenu.h")
+        .allowlist_type("fallout::ObjectWithFlags")
+        .allowlist_function("fallout::objectsInit")
+        .allowlist_function("fallout::objectsReset")
+        .allowlist_function("fallout::objectsExit")
+        .allowlist_function("fallout::objectRead")
+        .allowlist_function("fallout::objectLoadAll")
+        .allowlist_function("fallout::objectSaveAll")
+        .allowlist_function("fallout::_obj_render_pre_roof")
+        .allowlist_function("fallout::_obj_render_post_roof")
+        .allowlist_function("fallout::objectCreateWithFidPid")
+        .allowlist_function("fallout::objectCreateWithPid")
+        .allowlist_function("fallout::_obj_copy")
+        .allowlist_function("fallout::_obj_connect")
+        .allowlist_function("fallout::_obj_disconnect")
+        .allowlist_function("fallout::_obj_offset")
+        .allowlist_function("fallout::_obj_move")
+        .allowlist_function("fallout::objectSetLocation")
+        .allowlist_function("fallout::_obj_reset_roof")
+        .allowlist_function("fallout::objectSetFid")
+        .allowlist_function("fallout::objectSetFrame")
+        .allowlist_function("fallout::objectSetNextFrame")
+        .allowlist_function("fallout::objectSetPrevFrame")
+        .allowlist_function("fallout::objectSetRotation")
+        .allowlist_function("fallout::objectRotateClockwise")
+        .allowlist_function("fallout::objectRotateCounterClockwise")
+        .allowlist_function("fallout::_obj_rebuild_all_light")
+        .allowlist_function("fallout::objectSetLight")
+        .allowlist_function("fallout::objectGetLightIntensity")
+        .allowlist_function("fallout::_obj_turn_on_light")
+        .allowlist_function("fallout::_obj_turn_off_light")
+        .allowlist_function("fallout::objectShow")
+        .allowlist_function("fallout::objectHide")
+        .allowlist_function("fallout::objectEnableOutline")
+        .allowlist_function("fallout::objectDisableOutline")
+        .allowlist_function("fallout::_obj_toggle_flat")
+        .allowlist_function("fallout::objectDestroy")
+        .allowlist_function("fallout::_obj_inven_free")
+        .allowlist_function("fallout::_obj_action_can_use")
+        .allowlist_function("fallout::_obj_action_can_talk_to")
+        .allowlist_function("fallout::_obj_portal_is_walk_thru")
+        .allowlist_function("fallout::objectFindById")
+        .allowlist_function("fallout::objectGetOwner")
+        .allowlist_function("fallout::_obj_remove_all")
+        .allowlist_function("fallout::objectFindFirst")
+        .allowlist_function("fallout::objectFindNext")
+        .allowlist_function("fallout::objectFindFirstAtElevation")
+        .allowlist_function("fallout::objectFindNextAtElevation")
+        .allowlist_function("fallout::objectFindFirstAtLocation")
+        .allowlist_function("fallout::objectFindNextAtLocation")
+        .allowlist_function("fallout::objectGetRect")
+        .allowlist_function("fallout::_obj_occupied")
+        .allowlist_function("fallout::_obj_blocking_at")
+        .allowlist_function("fallout::_obj_shoot_blocking_at")
+        .allowlist_function("fallout::_obj_ai_blocking_at")
+        .allowlist_function("fallout::_obj_scroll_blocking_at")
+        .allowlist_function("fallout::_obj_sight_blocking_at")
+        .allowlist_function("fallout::objectGetDistanceBetween")
+        .allowlist_function("fallout::objectGetDistanceBetweenTiles")
+        .allowlist_function("fallout::objectListCreate")
+        .allowlist_function("fallout::objectListFree")
+        .allowlist_function("fallout::_translucent_trans_buf_to_buf")
+        .allowlist_function("fallout::_dark_trans_buf_to_buf")
+        .allowlist_function("fallout::_dark_translucent_trans_buf_to_buf")
+        .allowlist_function("fallout::_intensity_mask_buf_to_buf")
+        .allowlist_function("fallout::objectSetOutline")
+        .allowlist_function("fallout::objectClearOutline")
+        .allowlist_function("fallout::_obj_intersects_with")
+        .allowlist_function("fallout::_obj_create_intersect_list")
+        .allowlist_function("fallout::_obj_delete_intersect_list")
+        .allowlist_function("fallout::obj_set_seen")
+        .allowlist_function("fallout::_obj_clear_seen")
+        .allowlist_function("fallout::_obj_process_seen")
+        .allowlist_function("fallout::objectGetName")
+        .allowlist_function("fallout::objectGetDescription")
+        .allowlist_function("fallout::_obj_preload_art_cache")
+        .allowlist_function("fallout::_obj_save_dude")
+        .allowlist_function("fallout::_obj_load_dude")
+        .allowlist_function("fallout::_obj_fix_violence_settings")
+        .allowlist_function("fallout::objectTypedFindById")
+        .allowlist_function("fallout::isExitGridAt");
+    write_bindings("mainmenu_h", &builder, out_path.clone());
+    return builder;
+    // extern unsigned char* _wallBlendTable;
+    // extern Object* _moveBlockObj;
+    // extern unsigned char _commonGrayTable[256];
+    // extern Object* gEgg;
+    // extern Object* gDude;
+}
+
+fn add_mainmenu_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/mainmenu.h")
+        .allowlist_type("fallout::MainMenuOption")
+        .allowlist_function("fallout::mainMenuWindowInit")
+        .allowlist_function("fallout::mainMenuWindowFree")
+        .allowlist_function("fallout::mainMenuWindowHide")
+        .allowlist_function("fallout::mainMenuWindowUnhide")
+        .allowlist_function("fallout::_main_menu_is_enabled")
+        .allowlist_function("fallout::mainMenuWindowHandleEvents");
+    write_bindings("mainmenu_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_loadsave_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/loadsave.h")
+        .allowlist_type("fallout::LoadSaveMode")
+        .allowlist_function("fallout::_InitLoadSave")
+        .allowlist_function("fallout::_ResetLoadSave")
+        .allowlist_function("fallout::lsgSaveGame")
+        .allowlist_function("fallout::lsgLoadGame")
+        .allowlist_function("fallout::_isLoadingGame")
+        .allowlist_function("fallout::lsgInit")
+        .allowlist_function("fallout::MapDirErase")
+        .allowlist_function("fallout::_MapDirEraseFile_");
+    write_bindings("loadsave_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_kb_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/kb.h")
+        .allowlist_type("fallout::Key")
+        .allowlist_type("fallout::KeyboardLayout")
+        .allowlist_type("fallout::KeyboardData")
+        .allowlist_function("fallout::keyboardInit")
+        .allowlist_function("fallout::keyboardFree")
+        .allowlist_function("fallout::keyboardReset")
+        .allowlist_function("fallout::_kb_getch")
+        .allowlist_function("fallout::keyboardDisable")
+        .allowlist_function("fallout::keyboardEnable")
+        .allowlist_function("fallout::keyboardIsDisabled")
+        .allowlist_function("fallout::keyboardSetLayout")
+        .allowlist_function("fallout::keyboardGetLayout")
+        .allowlist_function("fallout::_kb_simulate_key");
+    write_bindings("kb_h", &builder, out_path.clone());
+    return builder;
+    // extern unsigned char gPressedPhysicalKeys[SDL_NUM_SCANCODES];
+    // extern int gKeyboardLayout;
+    // extern unsigned char gPressedPhysicalKeysCount;
+}
+
+fn add_input_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/input.h")
+        .allowlist_type("fallout::GameMovieFlags")
+        .allowlist_type("fallout::GameMovie")
+        .allowlist_function("fallout::inputInit")
+        .allowlist_function("fallout::inputExit")
+        .allowlist_function("fallout::inputGetInput")
+        .allowlist_function("fallout::_process_bk")
+        .allowlist_function("fallout::enqueueInputEvent")
+        .allowlist_function("fallout::inputEventQueueReset")
+        .allowlist_function("fallout::tickersExecute")
+        .allowlist_function("fallout::tickersAdd")
+        .allowlist_function("fallout::tickersRemove")
+        .allowlist_function("fallout::tickersEnable")
+        .allowlist_function("fallout::tickersDisable")
+        .allowlist_function("fallout::pauseHandlerConfigure")
+        .allowlist_function("fallout::takeScreenshot")
+        .allowlist_function("fallout::screenshotHandlerDefaultImpl")
+        .allowlist_function("fallout::screenshotHandlerConfigure")
+        .allowlist_function("fallout::getTicks")
+        .allowlist_function("fallout::inputPauseForTocks")
+        .allowlist_function("fallout::inputBlockForTocks")
+        .allowlist_function("fallout::getTicksSince")
+        .allowlist_function("fallout::getTicksBetween")
+        .allowlist_function("fallout::_get_bk_time")
+        .allowlist_function("fallout::inputSetKeyboardKeyRepeatRate")
+        .allowlist_function("fallout::inputGetKeyboardKeyRepeatRate")
+        .allowlist_function("fallout::inputSetKeyboardKeyRepeatDelay")
+        .allowlist_function("fallout::inputGetKeyboardKeyRepeatDelay")
+        .allowlist_function("fallout::inputSetFocusFunc")
+        .allowlist_function("fallout::inputGetFocusFunc")
+        .allowlist_function("fallout::inputSetIdleFunc")
+        .allowlist_function("fallout::inputGetIdleFunc")
+        .allowlist_function("fallout::_GNW95_input_init")
+        .allowlist_function("fallout::_GNW95_process_message")
+        .allowlist_function("fallout::_GNW95_clear_time_stamps")
+        .allowlist_function("fallout::_GNW95_lost_focus")
+        .allowlist_function("fallout::beginTextInput")
+        .allowlist_function("fallout::endTextInput");
+    write_bindings("input_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_game_sound_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/game_sound.h")
+        .allowlist_type("fallout::WeaponSoundEffect")
+        .allowlist_type("fallout::ScenerySoundEffect")
+        .allowlist_type("fallout::CharacterSoundEffect")
+        .allowlist_type("fallout::SoundEndCallback")
+        .allowlist_type("fallout::Sound")
+        .allowlist_type("fallout::Object")
+        .allowlist_function("fallout::gameSoundInit")
+        .allowlist_function("fallout::gameSoundReset")
+        .allowlist_function("fallout::gameSoundExit")
+        .allowlist_function("fallout::gameSoundSetMasterVolume")
+        .allowlist_function("fallout::gameSoundGetMasterVolume")
+        .allowlist_function("fallout::soundEffectsSetVolume")
+        .allowlist_function("fallout::backgroundSoundIsEnabled")
+        .allowlist_function("fallout::backgroundSoundSetVolume")
+        .allowlist_function("fallout::backgroundSoundGetVolume")
+        .allowlist_function("fallout::_gsound_background_volume_get_set")
+        .allowlist_function("fallout::backgroundSoundSetEndCallback")
+        .allowlist_function("fallout::backgroundSoundLoad")
+        .allowlist_function("fallout::_gsound_background_play_level_music")
+        .allowlist_function("fallout::backgroundSoundDelete")
+        .allowlist_function("fallout::backgroundSoundRestart")
+        .allowlist_function("fallout::backgroundSoundPause")
+        .allowlist_function("fallout::backgroundSoundResume")
+        .allowlist_function("fallout::speechIsEnabled")
+        .allowlist_function("fallout::speechSetVolume")
+        .allowlist_function("fallout::speechGetVolume")
+        .allowlist_function("fallout::speechSetEndCallback")
+        .allowlist_function("fallout::speechGetDuration")
+        .allowlist_function("fallout::speechLoad")
+        .allowlist_function("fallout::_gsound_speech_play_preloaded")
+        .allowlist_function("fallout::speechDelete")
+        .allowlist_function("fallout::_gsound_play_sfx_file_volume")
+        .allowlist_function("fallout::soundEffectLoad")
+        .allowlist_function("fallout::soundEffectLoadWithVolume")
+        .allowlist_function("fallout::soundEffectDelete")
+        .allowlist_function("fallout::_gsnd_anim_sound")
+        .allowlist_function("fallout::soundEffectPlay")
+        .allowlist_function("fallout::_gsound_compute_relative_volume")
+        .allowlist_function("fallout::sfxBuildCharName")
+        .allowlist_function("fallout::gameSoundBuildAmbientSoundEffectName")
+        .allowlist_function("fallout::gameSoundBuildInterfaceName")
+        .allowlist_function("fallout::sfxBuildWeaponName")
+        .allowlist_function("fallout::sfxBuildSceneryName")
+        .allowlist_function("fallout::sfxBuildOpenName")
+        .allowlist_function("fallout::_gsound_red_butt_press")
+        .allowlist_function("fallout::_gsound_red_butt_release")
+        .allowlist_function("fallout::_gsound_toggle_butt_press_")
+        .allowlist_function("fallout::_gsound_med_butt_press")
+        .allowlist_function("fallout::_gsound_med_butt_release")
+        .allowlist_function("fallout::_gsound_lrg_butt_press")
+        .allowlist_function("fallout::_gsound_lrg_butt_release")
+        .allowlist_function("fallout::soundPlayFile")
+        .allowlist_function("fallout::_gsound_sfx_q_start")
+        .allowlist_function("fallout::ambientSoundEffectEventProcess");
+    write_bindings("game_sound_h", &builder, out_path.clone());
+    return builder;
+
+    // extern int gMusicVolume;
+}
+
+fn add_game_movie_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/game_movie.h")
+        .allowlist_type("fallout::GameMovieFlags")
+        .allowlist_type("fallout::GameMovie")
+        .allowlist_function("fallout::gameMoviesInit")
+        .allowlist_function("fallout::gameMoviesReset")
+        .allowlist_function("fallout::gameMoviesLoad")
+        .allowlist_function("fallout::gameMoviesSave")
+        .allowlist_function("fallout::gameMoviePlay")
+        .allowlist_function("fallout::gameMovieFadeOut")
+        .allowlist_function("fallout::gameMovieIsSeen")
+        .allowlist_function("fallout::gameMovieIsPlaying");
+    write_bindings("game_movie_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_game_mouse_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/game_mouse.h")
+        .allowlist_type("fallout::GameMouseMode")
+        .allowlist_type("fallout::GameMouseActionMenuItem")
+        .allowlist_type("fallout::MouseCursorType")
+        .allowlist_function("fallout::gameMouseInit")
+        .allowlist_function("fallout::gameMouseReset")
+        .allowlist_function("fallout::gameMouseExit")
+        .allowlist_function("fallout::_gmouse_enable")
+        .allowlist_function("fallout::_gmouse_disable")
+        .allowlist_function("fallout::_gmouse_enable_scrolling")
+        .allowlist_function("fallout::_gmouse_disable_scrolling")
+        .allowlist_function("fallout::gmouse_scrolling_is_enabled")
+        .allowlist_function("fallout::_gmouse_is_scrolling")
+        .allowlist_function("fallout::gameMouseRefresh")
+        .allowlist_function("fallout::_gmouse_handle_event")
+        .allowlist_function("fallout::gameMouseSetCursor")
+        .allowlist_function("fallout::gameMouseGetCursor")
+        .allowlist_function("fallout::gmouse_set_mapper_mode")
+        .allowlist_function("fallout::gameMouseSetMode")
+        .allowlist_function("fallout::gameMouseGetMode")
+        .allowlist_function("fallout::gameMouseCycleMode")
+        .allowlist_function("fallout::_gmouse_3d_refresh")
+        .allowlist_function("fallout::gameMouseResetBouncingCursorFid")
+        .allowlist_function("fallout::gameMouseObjectsShow")
+        .allowlist_function("fallout::gameMouseObjectsHide")
+        .allowlist_function("fallout::gameMouseObjectsIsVisible")
+        .allowlist_function("fallout::gameMouseRenderPrimaryAction")
+        .allowlist_function("fallout::_gmouse_3d_pick_frame_hot")
+        .allowlist_function("fallout::gameMouseRenderActionMenuItems")
+        .allowlist_function("fallout::gameMouseHighlightActionMenuItemAtIndex")
+        .allowlist_function("fallout::gameMouseLoadItemHighlight")
+        .allowlist_function("fallout::_gmouse_remove_item_outline")
+        .allowlist_function("fallout::gameMouseRefreshImmediately");
+    write_bindings("game_mouse_h", &builder, out_path.clone());
+    return builder;
+
+    // extern bool _gmouse_clicked_on_edge;
+    // extern Object* gGameMouseBouncingCursor;
+    // extern Object* gGameMouseHexCursor;
 }
 
 fn add_game_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
