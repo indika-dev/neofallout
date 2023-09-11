@@ -51,6 +51,10 @@ fn main() {
     // add_svga_h_to_bindings(&out_path);
     add_text_font_h_to_bindings(&out_path);
     add_window_h_to_bindings(&out_path);
+    add_window_manager_h_to_bindings(&out_path);
+    add_window_manager_private_h_to_bindings(&out_path);
+    add_word_wrap_h_to_bindings(&out_path);
+    add_worldmap_h_to_bindings(&out_path);
 }
 
 fn assign_defaults(builder: bindgen::Builder) -> bindgen::Builder {
@@ -81,6 +85,179 @@ fn write_bindings(sourcefile: &str, builder: &bindgen::Builder, out_path: PathBu
     bindings
         .write_to_file(String::from("src/bindings_") + sourcefile + ".rs")
         .expect("Couldn't write bindings!");
+}
+
+fn add_worldmap_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/worldmap.h")
+        .allowlist_type("fallout::MapFlags")
+        .allowlist_type("fallout::CityState")
+        .allowlist_type("fallout::City")
+        .allowlist_type("fallout::Map")
+        .allowlist_function("fallout::wmWorldMap_init")
+        .allowlist_function("fallout::wmWorldMap_exit")
+        .allowlist_function("fallout::wmWorldMap_reset")
+        .allowlist_function("fallout::wmWorldMap_save")
+        .allowlist_function("fallout::wmWorldMap_load")
+        .allowlist_function("fallout::wmMapMaxCount")
+        .allowlist_function("fallout::wmMapIdxToName")
+        .allowlist_function("fallout::wmMapMatchNameToIdx")
+        .allowlist_function("fallout::wmMapIdxIsSaveable")
+        .allowlist_function("fallout::wmMapIsSaveable")
+        .allowlist_function("fallout::wmMapDeadBodiesAge")
+        .allowlist_function("fallout::wmMapCanRestHere")
+        .allowlist_function("fallout::wmMapPipboyActive")
+        .allowlist_function("fallout::wmMapMarkVisited")
+        .allowlist_function("fallout::wmMapMarkMapEntranceState")
+        .allowlist_function("fallout::wmWorldMap")
+        .allowlist_function("fallout::wmCheckGameAreaEvents")
+        .allowlist_function("fallout::wmSetupRandomEncounter")
+        .allowlist_function("fallout::wmEvalTileNumForPlacement")
+        .allowlist_function("fallout::wmSubTileMarkRadiusVisited")
+        .allowlist_function("fallout::wmSubTileGetVisitedState")
+        .allowlist_function("fallout::wmGetAreaIdxName")
+        .allowlist_function("fallout::wmAreaIsKnown")
+        .allowlist_function("fallout::wmAreaVisitedState")
+        .allowlist_function("fallout::wmMapIsKnown")
+        .allowlist_function("fallout::wmAreaMarkVisited")
+        .allowlist_function("fallout::wmAreaMarkVisitedState")
+        .allowlist_function("fallout::wmAreaSetVisibleState")
+        .allowlist_function("fallout::wmAreaSetWorldPos")
+        .allowlist_function("fallout::wmGetPartyWorldPos")
+        .allowlist_function("fallout::wmGetPartyCurArea")
+        .allowlist_function("fallout::wmTownMap")
+        .allowlist_function("fallout::wmCarUseGas")
+        .allowlist_function("fallout::wmCarFillGas")
+        .allowlist_function("fallout::wmCarGasAmount")
+        .allowlist_function("fallout::wmCarIsOutOfGas")
+        .allowlist_function("fallout::wmCarCurrentArea")
+        .allowlist_function("fallout::wmCarGiveToParty")
+        .allowlist_function("fallout::wmSfxMaxCount")
+        .allowlist_function("fallout::wmSfxRollNextIdx")
+        .allowlist_function("fallout::wmSfxIdxName")
+        .allowlist_function("fallout::wmMapMusicStart")
+        .allowlist_function("fallout::wmSetMapMusic")
+        .allowlist_function("fallout::wmMatchAreaContainingMapIdx")
+        .allowlist_function("fallout::wmTeleportToArea")
+        .allowlist_function("fallout::wmSetPartyWorldPos")
+        .allowlist_function("fallout::wmCarSetCurrentArea")
+        .allowlist_function("fallout::wmForceEncounter");
+    write_bindings("worldmap_h", &builder, out_path.clone());
+    return builder;
+
+    // extern unsigned char* circleBlendTable;
+}
+
+fn add_word_wrap_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/word_wrap.h")
+        .allowlist_function("fallout::wordWrap");
+    write_bindings("word_wrap_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_window_manager_private_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/window_manager_private.h")
+        .allowlist_type("fallout::MenuBar")
+        .allowlist_function("fallout::_win_list_select")
+        .allowlist_function("fallout::_win_list_select_at")
+        .allowlist_function("fallout::_win_get_str")
+        .allowlist_function("fallout::win_yes_no")
+        .allowlist_function("fallout::_win_msg")
+        .allowlist_function("fallout::_win_pull_down")
+        .allowlist_function("fallout::_create_pull_down")
+        .allowlist_function("fallout::_win_debug")
+        .allowlist_function("fallout:: _win_debug_delete")
+        .allowlist_function("fallout::_win_register_menu_bar")
+        .allowlist_function("fallout::_win_register_menu_pulldown")
+        .allowlist_function("fallout:: _win_delete_menu_bar")
+        .allowlist_function("fallout::_find_first_letter")
+        .allowlist_function("fallout::_win_width_needed")
+        .allowlist_function("fallout::_win_input_str")
+        .allowlist_function("fallout::process_pull_down")
+        .allowlist_function("fallout::_GNW_process_menu")
+        .allowlist_function("fallout::win_get_num_i")
+        .allowlist_function("fallout::_calc_max_field_chars_wcursor")
+        .allowlist_function("fallout::_GNW_intr_init")
+        .allowlist_function("fallout::_GNW_intr_exit")
+        .allowlist_function("fallout::win_timed_msg");
+    write_bindings("window_manager_private_h", &builder, out_path.clone());
+    return builder;
+    // extern char gProgramWindowTitle[256];
+}
+
+fn add_window_manager_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/window_manager.h")
+        .allowlist_type("fallout::WindowManagerErr")
+        .allowlist_type("fallout::WindowFlags")
+        .allowlist_type("fallout::ButtonFlags")
+        .allowlist_type("fallout::MenuPulldown")
+        .allowlist_type("fallout::MenuBar")
+        .allowlist_type("fallout::Window")
+        .allowlist_type("fallout::Button")
+        .allowlist_type("fallout::ButtonGroup")
+        .allowlist_function("fallout::windowManagerInit")
+        .allowlist_function("fallout::windowManagerExit")
+        .allowlist_function("fallout::windowCreate")
+        .allowlist_function("fallout::windowDestroy")
+        .allowlist_function("fallout::windowDrawBorder")
+        .allowlist_function("fallout::windowDrawText")
+        .allowlist_function("fallout::_win_text")
+        .allowlist_function("fallout::windowDrawLine")
+        .allowlist_function("fallout::windowDrawRect")
+        .allowlist_function("fallout::windowFill")
+        .allowlist_function("fallout::windowShow")
+        .allowlist_function("fallout::windowHide")
+        .allowlist_function("fallout::windowRefresh")
+        .allowlist_function("fallout::windowRefreshRect")
+        .allowlist_function("fallout::_GNW_win_refresh")
+        .allowlist_function("fallout::windowRefreshAll")
+        .allowlist_function("fallout::_win_get_mouse_buf")
+        .allowlist_function("fallout::windowGetWindow")
+        .allowlist_function("fallout::windowGetBuffer")
+        .allowlist_function("fallout::windowGetAtPoint")
+        .allowlist_function("fallout::windowGetWidth")
+        .allowlist_function("fallout::windowGetHeight")
+        .allowlist_function("fallout::windowGetRect")
+        .allowlist_function("fallout::_win_check_all_buttons")
+        .allowlist_function("fallout::_GNW_check_menu_bars")
+        .allowlist_function("fallout::programWindowSetTitle")
+        .allowlist_function("fallout::showMesageBox")
+        .allowlist_function("fallout::buttonCreate")
+        .allowlist_function("fallout::_win_register_text_button")
+        .allowlist_function("fallout::_win_register_button_disable")
+        .allowlist_function("fallout::_win_register_button_image")
+        .allowlist_function("fallout::buttonSetMouseCallbacks")
+        .allowlist_function("fallout::buttonSetRightMouseCallbacks")
+        .allowlist_function("fallout::buttonSetCallbacks")
+        .allowlist_function("fallout::buttonSetMask")
+        .allowlist_function("fallout::_win_button_down")
+        .allowlist_function("fallout::buttonGetWindowId")
+        .allowlist_function("fallout::_win_last_button_winID")
+        .allowlist_function("fallout::buttonDestroy")
+        .allowlist_function("fallout::buttonEnable")
+        .allowlist_function("fallout::buttonDisable")
+        .allowlist_function("fallout::_win_set_button_rest_state")
+        .allowlist_function("fallout::_win_group_radio_buttons")
+        .allowlist_function("fallout::_win_button_press_and_release");
+    write_bindings("window_manager_h", &builder, out_path.clone());
+    return builder;
+    // extern bool gWindowSystemInitialized;
+    // extern int _GNW_wcolor[6];
 }
 
 fn add_window_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
