@@ -18,6 +18,7 @@ fn main() {
     println!("cargo:rerun-if-changed=build.rs");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
+    // all SDL related stuff isn't transpiled to bindings
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     add_art_h_to_bindings(&out_path);
     add_autorun_h_to_bindings(&out_path);
@@ -41,6 +42,15 @@ fn main() {
     add_platform_compat_h_to_bindings(&out_path);
     add_preferences_h_to_bindings(&out_path);
     add_proto_h_to_bindings(&out_path);
+    add_random_h_to_bindings(&out_path);
+    add_script_h_to_bindings(&out_path);
+    add_selfrun_h_to_bindings(&out_path);
+    add_settings_h_to_bindings(&out_path);
+    add_sfall_config_h_to_bindings(&out_path);
+    add_sfall_global_scripts_h_to_bindings(&out_path);
+    // add_svga_h_to_bindings(&out_path);
+    add_text_font_h_to_bindings(&out_path);
+    add_window_h_to_bindings(&out_path);
 }
 
 fn assign_defaults(builder: bindgen::Builder) -> bindgen::Builder {
@@ -71,6 +81,365 @@ fn write_bindings(sourcefile: &str, builder: &bindgen::Builder, out_path: PathBu
     bindings
         .write_to_file(String::from("src/bindings_") + sourcefile + ".rs")
         .expect("Couldn't write bindings!");
+}
+
+fn add_window_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/window.h")
+        .allowlist_type("fallout::TextAlignment")
+        .allowlist_type("fallout::ManagedButtonMouseEvent")
+        .allowlist_type("fallout::ManagedButtonRightMouseEvent")
+        .allowlist_function("fallout::windowGetFont")
+        .allowlist_function("fallout::windowSetFont")
+        .allowlist_function("fallout::windowResetTextAttributes")
+        .allowlist_function("fallout::windowGetTextFlags")
+        .allowlist_function("fallout::windowSetTextFlags")
+        .allowlist_function("fallout::windowGetHighlightColor")
+        .allowlist_function("fallout::windowSetTextColor")
+        .allowlist_function("fallout::windowSetHighlightColor")
+        .allowlist_function("fallout::_checkRegion")
+        .allowlist_function("fallout::_windowCheckRegion")
+        .allowlist_function("fallout::_windowRefreshRegions")
+        .allowlist_function("fallout::_checkAllRegions")
+        .allowlist_function("fallout::_windowAddInputFunc")
+        .allowlist_function("fallout::_doRegionRightFunc")
+        .allowlist_function("fallout::_doRegionFunc")
+        .allowlist_function("fallout::_windowActivateRegion")
+        .allowlist_function("fallout::_getInput")
+        .allowlist_function("fallout::_doButtonOn")
+        .allowlist_function("fallout::sub_4B6F68")
+        .allowlist_function("fallout::_doButtonOff")
+        .allowlist_function("fallout::_doButtonPress")
+        .allowlist_function("fallout::_doButtonRelease")
+        .allowlist_function("fallout::_doRightButtonPress")
+        .allowlist_function("fallout::sub_4B704C")
+        .allowlist_function("fallout::_doRightButtonRelease")
+        .allowlist_function("fallout::_setButtonGFX")
+        .allowlist_function("fallout::_windowWidth")
+        .allowlist_function("fallout::_windowHeight")
+        .allowlist_function("fallout::_windowDraw")
+        .allowlist_function("fallout::_deleteWindow")
+        .allowlist_function("fallout::sub_4B7AC4")
+        .allowlist_function("fallout::sub_4B7E7C")
+        .allowlist_function("fallout::_createWindow")
+        .allowlist_function("fallout::_windowOutput")
+        .allowlist_function("fallout::_windowGotoXY")
+        .allowlist_function("fallout::_selectWindowID")
+        .allowlist_function("fallout::_selectWindow")
+        .allowlist_function("fallout::_windowGetBuffer")
+        .allowlist_function("fallout::_pushWindow")
+        .allowlist_function("fallout::_popWindow")
+        .allowlist_function("fallout::_windowPrintBuf")
+        .allowlist_function("fallout::_windowWordWrap")
+        .allowlist_function("fallout::_windowFreeWordList")
+        .allowlist_function("fallout::_windowWrapLineWithSpacing")
+        .allowlist_function("fallout::_windowWrapLine")
+        .allowlist_function("fallout::_windowPrintRect")
+        .allowlist_function("fallout::_windowFormatMessage")
+        .allowlist_function("fallout::_windowPrint")
+        .allowlist_function("fallout::_displayInWindow")
+        .allowlist_function("fallout::_displayFile")
+        .allowlist_function("fallout::_displayFileRaw")
+        .allowlist_function("fallout::_windowDisplay")
+        .allowlist_function("fallout::_windowDisplayBuf")
+        .allowlist_function("fallout::_windowGetXres")
+        .allowlist_function("fallout::_windowGetYres")
+        .allowlist_function("fallout::_removeProgramReferences_3")
+        .allowlist_function("fallout::_initWindow")
+        .allowlist_function("fallout::_windowClose")
+        .allowlist_function("fallout::_windowDeleteButton")
+        .allowlist_function("fallout::_windowSetButtonFlag")
+        .allowlist_function("fallout::_windowAddButton")
+        .allowlist_function("fallout::_windowAddButtonGfx")
+        .allowlist_function("fallout::_windowAddButtonProc")
+        .allowlist_function("fallout::_windowAddButtonRightProc")
+        .allowlist_function("fallout::_windowAddButtonCfunc")
+        .allowlist_function("fallout::_windowAddButtonRightCfunc")
+        .allowlist_function("fallout::_windowAddButtonText")
+        .allowlist_function("fallout::_windowAddButtonTextWithOffsets")
+        .allowlist_function("fallout::_windowFill")
+        .allowlist_function("fallout::_windowFillRect")
+        .allowlist_function("fallout::_windowEndRegion")
+        .allowlist_function("fallout::_windowCheckRegionExists")
+        .allowlist_function("fallout::_windowStartRegion")
+        .allowlist_function("fallout::_windowAddRegionPoint")
+        .allowlist_function("fallout::_windowAddRegionProc")
+        .allowlist_function("fallout::_windowAddRegionRightProc")
+        .allowlist_function("fallout::_windowSetRegionFlag")
+        .allowlist_function("fallout::_windowAddRegionName")
+        .allowlist_function("fallout::_windowDeleteRegion")
+        .allowlist_function("fallout::_updateWindows")
+        .allowlist_function("fallout::_windowMoviePlaying")
+        .allowlist_function("fallout::_windowSetMovieFlags")
+        .allowlist_function("fallout::_windowPlayMovie")
+        .allowlist_function("fallout::_windowPlayMovieRect")
+        .allowlist_function("fallout::_windowStopMovie")
+        .allowlist_function("fallout::_drawScaled")
+        .allowlist_function("fallout::_drawScaledBuf")
+        .allowlist_function("fallout::_alphaBltBuf")
+        .allowlist_function("fallout::_fillBuf3x3");
+    write_bindings("window_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_text_font_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/text_font.h")
+        .allowlist_type("fallout::FontManager")
+        .allowlist_function("fallout::textFontsInit")
+        .allowlist_function("fallout::textFontsExit")
+        .allowlist_function("fallout::textFontLoad")
+        .allowlist_function("fallout::fontManagerAdd")
+        .allowlist_function("fallout::fontGetCurrent")
+        .allowlist_function("fallout::fontSetCurrent");
+    write_bindings("text_font_h", &builder, out_path.clone());
+    return builder;
+    // extern FontManager gTextFontManager;
+    // extern int gCurrentFont;
+    // extern int gFontManagersCount;
+    // extern FontManagerDrawTextProc* fontDrawText;
+    // extern FontManagerGetLineHeightProc* fontGetLineHeight;
+    // extern FontManagerGetStringWidthProc* fontGetStringWidth;
+    // extern FontManagerGetCharacterWidthProc* fontGetCharacterWidth;
+    // extern FontManagerGetMonospacedStringWidthProc* fontGetMonospacedStringWidth;
+    // extern FontManagerGetLetterSpacingProc* fontGetLetterSpacing;
+    // extern FontManagerGetBufferSizeProc* fontGetBufferSize;
+    // extern FontManagerGetMonospacedCharacterWidth* fontGetMonospacedCharacterWidth;
+}
+
+fn add_svga_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/svga.h")
+        .allowlist_function("fallout::_init_mode_320_200")
+        .allowlist_function("fallout::_init_mode_320_400")
+        .allowlist_function("fallout::_init_mode_640_480_16")
+        .allowlist_function("fallout::_init_mode_640_480")
+        .allowlist_function("fallout::_init_mode_640_400")
+        .allowlist_function("fallout::_init_mode_800_600")
+        .allowlist_function("fallout::_init_mode_1024_768")
+        .allowlist_function("fallout::_init_mode_1280_1024")
+        .allowlist_function("fallout::_get_start_mode_")
+        .allowlist_function("fallout::_zero_vid_mem")
+        .allowlist_function("fallout::_GNW95_init_mode_ex")
+        .allowlist_function("fallout::_init_vesa_mode")
+        .allowlist_function("fallout::_GNW95_init_window")
+        .allowlist_function("fallout::directDrawInit")
+        .allowlist_function("fallout::directDrawFree")
+        .allowlist_function("fallout::directDrawSetPaletteInRange")
+        .allowlist_function("fallout::directDrawSetPalette")
+        .allowlist_function("fallout::directDrawGetPalette")
+        .allowlist_function("fallout::_GNW95_ShowRect")
+        .allowlist_function("fallout::_GNW95_zero_vid_mem")
+        .allowlist_function("fallout::screenGetWidth")
+        .allowlist_function("fallout::screenGetHeight")
+        .allowlist_function("fallout::screenGetVisibleHeight")
+        .allowlist_function("fallout::handleWindowSizeChanged")
+        .allowlist_function("fallout::renderPresent");
+    write_bindings("svga_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_sfall_global_scripts_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/sfall_global_scripts.h")
+        .allowlist_function("fallout::sfall_gl_scr_init")
+        .allowlist_function("fallout::sfall_gl_scr_reset")
+        .allowlist_function("fallout::sfall_gl_scr_exit")
+        .allowlist_function("fallout::sfall_gl_scr_exec_start_proc")
+        .allowlist_function("fallout::sfall_gl_scr_remove_all")
+        .allowlist_function("fallout::sfall_gl_scr_exec_map_update_scripts")
+        .allowlist_function("fallout::sfall_gl_scr_process_main")
+        .allowlist_function("fallout::sfall_gl_scr_process_input")
+        .allowlist_function("fallout::sfall_gl_scr_process_worldmap")
+        .allowlist_function("fallout::sfall_gl_scr_set_repeat")
+        .allowlist_function("fallout::sfall_gl_scr_set_type")
+        .allowlist_function("fallout::sfall_gl_scr_is_loaded")
+        .allowlist_function("fallout::sfall_gl_scr_update");
+    write_bindings("sfall_global_scripts_h", &builder, out_path.clone());
+    return builder;
+}
+
+fn add_sfall_config_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/sfall_config.h")
+        .allowlist_function("fallout::sfallConfigInit")
+        .allowlist_function("fallout::sfallConfigExit");
+    write_bindings("sfall_config_h", &builder, out_path.clone());
+    return builder;
+    // extern bool gSfallConfigInitialized;
+    // extern Config gSfallConfig;
+}
+
+fn add_settings_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/settings.h")
+        .allowlist_type("fallout::SystemSettings")
+        .allowlist_type("fallout::PreferencesSettings")
+        .allowlist_type("fallout::SoundSettings")
+        .allowlist_type("fallout::DebugSettings")
+        .allowlist_type("fallout::MapperSettings")
+        .allowlist_type("fallout::Settings")
+        .allowlist_function("fallout::settingsInit")
+        .allowlist_function("fallout::settingsSave")
+        .allowlist_function("fallout::settingsExit");
+    write_bindings("settings_h", &builder, out_path.clone());
+    return builder;
+
+    // extern Settings settings;
+}
+
+fn add_selfrun_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/selfrun.h")
+        .allowlist_type("fallout::SelfrunState")
+        .allowlist_type("fallout::SelfrunData")
+        .allowlist_function("fallout::selfrunInitFileList")
+        .allowlist_function("fallout::selfrunFreeFileList")
+        .allowlist_function("fallout::selfrunPreparePlayback")
+        .allowlist_function("fallout::selfrunPlaybackLoop")
+        .allowlist_function("fallout::selfrunPrepareRecording")
+        .allowlist_function("fallout::selfrunRecordingLoop")
+        .allowlist_function("fallout::selfrunPlaybackCompleted")
+        .allowlist_function("fallout::selfrunReadData")
+        .allowlist_function("fallout::selfrunWriteData");
+    write_bindings("selfrun_h", &builder, out_path.clone());
+    return builder;
+    // extern int gSelfrunState;
+}
+
+fn add_script_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/scripts.h")
+        .allowlist_type("fallout::ScriptRequests")
+        .allowlist_type("fallout::ScriptType")
+        .allowlist_type("fallout::ScriptProc")
+        .allowlist_type("fallout::Script")
+        .allowlist_function("fallout::gameTimeGetTime")
+        .allowlist_function("fallout::gameTimeGetDate")
+        .allowlist_function("fallout::gameTimeGetHour")
+        .allowlist_function("fallout::gameTimeGetTimeString")
+        .allowlist_function("fallout::gameTimeAddTicks")
+        .allowlist_function("fallout::gameTimeAddSeconds")
+        .allowlist_function("fallout::gameTimeSetTime")
+        .allowlist_function("fallout::gameTimeScheduleUpdateEvent")
+        .allowlist_function("fallout::gameTimeEventProcess")
+        .allowlist_function("fallout::_scriptsCheckGameEvents")
+        .allowlist_function("fallout::mapUpdateEventProcess")
+        .allowlist_function("fallout::scriptsNewObjectId")
+        .allowlist_function("fallout::scriptGetSid")
+        .allowlist_function("fallout::scriptGetSelf")
+        .allowlist_function("fallout::scriptSetObjects")
+        .allowlist_function("fallout::scriptSetFixedParam")
+        .allowlist_function("fallout::scriptSetActionBeingUsed")
+        .allowlist_function("fallout::_scrSetQueueTestVals")
+        .allowlist_function("fallout::_scrQueueRemoveFixed")
+        .allowlist_function("fallout::scriptAddTimerEvent")
+        .allowlist_function("fallout::scriptEventWrite")
+        .allowlist_function("fallout::scriptEventRead")
+        .allowlist_function("fallout::scriptEventProcess")
+        .allowlist_function("fallout::_scripts_clear_combat_requests")
+        .allowlist_function("fallout::scriptsHandleRequests")
+        .allowlist_function("fallout::_scripts_check_state_in_combat")
+        .allowlist_function("fallout::scriptsRequestCombat")
+        .allowlist_function("fallout::_scripts_request_combat_locked")
+        .allowlist_function("fallout::scripts_request_townmap")
+        .allowlist_function("fallout::scriptsRequestWorldMap")
+        .allowlist_function("fallout::scriptsRequestElevator")
+        .allowlist_function("fallout::scriptsRequestExplosion")
+        .allowlist_function("fallout::scriptsRequestDialog")
+        .allowlist_function("fallout::scriptsRequestEndgame")
+        .allowlist_function("fallout::scriptsRequestLooting")
+        .allowlist_function("fallout::scriptsRequestStealing")
+        .allowlist_function("fallout::_script_make_path")
+        .allowlist_function("fallout::scriptExecProc")
+        .allowlist_function("fallout::scriptHasProc")
+        .allowlist_function("fallout::_scr_find_str_run_info")
+        .allowlist_function("fallout::scriptsSetDudeScript")
+        .allowlist_function("fallout::scriptsClearDudeScript")
+        .allowlist_function("fallout::scriptsInit")
+        .allowlist_function("fallout::_scr_reset")
+        .allowlist_function("fallout::_scr_game_init")
+        .allowlist_function("fallout::scriptsReset")
+        .allowlist_function("fallout::scriptsExit")
+        .allowlist_function("fallout::_scr_message_free")
+        .allowlist_function("fallout::_scr_game_exit")
+        .allowlist_function("fallout::scriptsEnable")
+        .allowlist_function("fallout::scriptsDisable")
+        .allowlist_function("fallout::_scr_enable_critters")
+        .allowlist_function("fallout::_scr_disable_critters")
+        .allowlist_function("fallout::scriptsSaveGameGlobalVars")
+        .allowlist_function("fallout::scriptsLoadGameGlobalVars")
+        .allowlist_function("fallout::scriptsSkipGameGlobalVars")
+        .allowlist_function("fallout::scriptSaveAll")
+        .allowlist_function("fallout::scriptLoadAll")
+        .allowlist_function("fallout::scriptGetScript")
+        .allowlist_function("fallout::scriptAdd")
+        .allowlist_function("fallout::scriptRemove")
+        .allowlist_function("fallout::_scr_remove_all")
+        .allowlist_function("fallout::_scr_remove_all_force")
+        .allowlist_function("fallout::scriptGetFirstSpatialScript")
+        .allowlist_function("fallout::scriptGetNextSpatialScript")
+        .allowlist_function("fallout::_scr_spatials_enable")
+        .allowlist_function("fallout::_scr_spatials_disable")
+        .allowlist_function("fallout::scriptsExecSpatialProc")
+        .allowlist_function("fallout::scriptsExecStartProc")
+        .allowlist_function("fallout::scriptsExecMapEnterProc")
+        .allowlist_function("fallout::scriptsExecMapUpdateProc")
+        .allowlist_function("fallout::scriptsExecMapUpdateScripts")
+        .allowlist_function("fallout::scriptsExecMapExitProc")
+        .allowlist_function("fallout::_scr_get_msg_str")
+        .allowlist_function("fallout::_scr_get_msg_str_speech")
+        .allowlist_function("fallout::scriptGetLocalVar")
+        .allowlist_function("fallout::scriptSetLocalVar")
+        .allowlist_function("fallout::_scr_end_combat")
+        .allowlist_function("fallout::_scr_explode_scenery");
+    write_bindings("scripts_h", &builder, out_path.clone());
+    return builder;
+
+    // extern const char* gScriptProcNames[SCRIPT_PROC_COUNT];
+}
+
+fn add_random_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("fallout2-ce/src/random.h")
+        .allowlist_type("fallout::Roll")
+        .allowlist_function("fallout::randomInit")
+        .allowlist_function("fallout::randomReset")
+        .allowlist_function("fallout::randomExit")
+        .allowlist_function("fallout::randomSave")
+        .allowlist_function("fallout::randomLoad")
+        .allowlist_function("fallout::randomRoll")
+        .allowlist_function("fallout::randomBetween")
+        .allowlist_function("fallout::randomSeedPrerandom");
+    write_bindings("random_h", &builder, out_path.clone());
+    return builder;
 }
 
 fn add_proto_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
