@@ -21,7 +21,7 @@ osx_minimum_system_version = "10.11"
 
 [build-dependencies]
 cmake = "0.1"
-bindgen = "0.66.1"
+bindgen = "0.68.1"
 
 [dependencies]
 wasmer = "4.2.0"
