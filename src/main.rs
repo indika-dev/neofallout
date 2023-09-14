@@ -11,16 +11,16 @@ use neofallout::{
     Dam, LoadSaveMode, MainMenuOption, MouseCursorType, ObjectFlags, WindowFlags, _map_exit,
     _map_init, autorunMutexClose, backgroundSoundDelete, creditsOpen, cursorIsHidden,
     doPreferences, endgameSetupDeathEnding, fileNameListInit, gameHandleKey, gameInitWithOptions,
-    gameMouseSetCursor, inputGetInput, mainMenuWindowFree, mapHandleTransition, mapLoadByName,
-    mouseHideCursor, mouseShowCursor, objectHide, objectShow, renderPresent, scriptsDisable,
-    scriptsEnable, scriptsHandleRequests, selfrunFreeFileList, selfrunInitFileList,
-    sfall_gl_scr_process_main, wmMapMusicStart, SelfrunData, _proto_dude_init, _win_list_select,
-    artCacheFlush, backgroundSoundDelete, blitBufferToBuffer, colorCycleDisable,
-    endgameDeathEndingGetFileName, inputEventQueueReset, keyboardReset, mainMenuWindowHide,
-    main_reset_system, memset, randomSeedPrerandom, selfrunPreparePlayback,
-    selfrunPrepareRecording, selfrunRecordingLoop, windowGetBuffer, FrmImage,
-    _gsound_speech_play_preloaded, bufferFill, colorCycleEnable, fileClose, fileOpen, fileReadChar,
-    fontDrawText, fontGetLineHeight, getTicks, inputBlockForTocks, inputPauseForTocks,
+    gameMouseSetCursor, inputGetInput, mainMenuWindowFree, mapHandleTransition, mouseHideCursor,
+    mouseShowCursor, objectHide, objectShow, renderPresent, scriptsDisable, scriptsEnable,
+    scriptsHandleRequests, selfrunFreeFileList, selfrunInitFileList, sfall_gl_scr_process_main,
+    wmMapMusicStart, SelfrunData, _proto_dude_init, _win_list_select, artCacheFlush,
+    backgroundSoundDelete, blitBufferToBuffer, colorCycleDisable, endgameDeathEndingGetFileName,
+    inputEventQueueReset, keyboardReset, main_reset_system, memset, randomSeedPrerandom,
+    selfrunPreparePlayback, selfrunPrepareRecording, selfrunRecordingLoop, windowGetBuffer,
+    FrmImage, _gsound_speech_play_preloaded, bufferFill, characterSelectorOpen, colorCycleEnable,
+    fileClose, fileOpen, fileReadChar, fontDrawText, fontGetLineHeight, free, gameExit,
+    gameMouseSetCursor, gameReset, getTicks, inputBlockForTocks, inputPauseForTocks, mapLoadByName,
     mouseGetEvent, renderPresent, sizeof, snprintf, speechDelete, speechLoad, speechSetEndCallback,
     speechSetEndCallback, strrchr, windowRefresh, wordWrap, SFALL_CONFIG_KEYS,
 };
@@ -59,202 +59,6 @@ static gMainMenuScreensaverCycle: bool = true;
 
 // 0x614838
 static _main_death_voiceover_done: bool = true;
-
-// enum SFALL_CONFIG_KEYS {
-//     SFALL_CONFIG_FILE_NAME = "ddraw.ini",
-//     SFALL_CONFIG_MISC_KEY = "Misc",
-//     SFALL_CONFIG_SCRIPTS_KEY = "Scripts",
-//     SFALL_CONFIG_DUDE_NATIVE_LOOK_JUMPSUIT_MALE_KEY = "MaleDefaultModel",
-//     SFALL_CONFIG_DUDE_NATIVE_LOOK_JUMPSUIT_FEMALE_KEY = "FemaleDefaultModel",
-//     SFALL_CONFIG_DUDE_NATIVE_LOOK_TRIBAL_MALE_KEY = "MaleStartModel",
-//     SFALL_CONFIG_DUDE_NATIVE_LOOK_TRIBAL_FEMALE_KEY = "FemaleStartModel",
-//     SFALL_CONFIG_START_YEAR = "StartYear",
-//     SFALL_CONFIG_START_MONTH = "StartMonth",
-//     SFALL_CONFIG_START_DAY = "StartDay",
-//     SFALL_CONFIG_MAIN_MENU_BIG_FONT_COLOR_KEY = "MainMenuBigFontColour",
-//     SFALL_CONFIG_MAIN_MENU_CREDITS_OFFSET_X_KEY = "MainMenuCreditsOffsetX",
-//     SFALL_CONFIG_MAIN_MENU_CREDITS_OFFSET_Y_KEY = "MainMenuCreditsOffsetY",
-//     SFALL_CONFIG_MAIN_MENU_FONT_COLOR_KEY = "MainMenuFontColour",
-//     SFALL_CONFIG_MAIN_MENU_OFFSET_X_KEY = "MainMenuOffsetX",
-//     SFALL_CONFIG_MAIN_MENU_OFFSET_Y_KEY = "MainMenuOffsetY",
-//     SFALL_CONFIG_SKIP_OPENING_MOVIES_KEY = "SkipOpeningMovies",
-//     SFALL_CONFIG_STARTING_MAP_KEY = "StartingMap",
-//     SFALL_CONFIG_KARMA_FRMS_KEY = "KarmaFRMs",
-//     SFALL_CONFIG_KARMA_POINTS_KEY = "KarmaPoints",
-//     SFALL_CONFIG_DISPLAY_KARMA_CHANGES_KEY = "DisplayKarmaChanges",
-//     SFALL_CONFIG_OVERRIDE_CRITICALS_MODE_KEY = "OverrideCriticalTable",
-//     SFALL_CONFIG_OVERRIDE_CRITICALS_FILE_KEY = "OverrideCriticalFile",
-//     SFALL_CONFIG_REMOVE_CRITICALS_TIME_LIMITS_KEY = "RemoveCriticalTimelimits",
-//     SFALL_CONFIG_BOOKS_FILE_KEY = "BooksFile",
-//     SFALL_CONFIG_ELEVATORS_FILE_KEY = "ElevatorsFile",
-//     SFALL_CONFIG_CONSOLE_OUTPUT_FILE_KEY = "ConsoleOutputPath",
-//     SFALL_CONFIG_PREMADE_CHARACTERS_FILE_NAMES_KEY = "PremadePaths",
-//     SFALL_CONFIG_PREMADE_CHARACTERS_FACE_FIDS_KEY = "PremadeFIDs",
-//     SFALL_CONFIG_BURST_MOD_ENABLED_KEY = "ComputeSprayMod",
-//     SFALL_CONFIG_BURST_MOD_CENTER_MULTIPLIER_KEY = "ComputeSpray_CenterMult",
-//     SFALL_CONFIG_BURST_MOD_CENTER_DIVISOR_KEY = "ComputeSpray_CenterDiv",
-//     SFALL_CONFIG_BURST_MOD_TARGET_MULTIPLIER_KEY = "ComputeSpray_TargetMult",
-//     SFALL_CONFIG_BURST_MOD_TARGET_DIVISOR_KEY = "ComputeSpray_TargetDiv",
-//     SFALL_CONFIG_DYNAMITE_MIN_DAMAGE_KEY = "Dynamite_DmgMin",
-//     SFALL_CONFIG_DYNAMITE_MAX_DAMAGE_KEY = "Dynamite_DmgMax",
-//     SFALL_CONFIG_PLASTIC_EXPLOSIVE_MIN_DAMAGE_KEY = "PlasticExplosive_DmgMin",
-//     SFALL_CONFIG_PLASTIC_EXPLOSIVE_MAX_DAMAGE_KEY = "PlasticExplosive_DmgMax",
-//     SFALL_CONFIG_EXPLOSION_EMITS_LIGHT_KEY = "ExplosionsEmitLight",
-//     SFALL_CONFIG_MOVIE_TIMER_ARTIMER1 = "MovieTimer_artimer1",
-//     SFALL_CONFIG_MOVIE_TIMER_ARTIMER2 = "MovieTimer_artimer2",
-//     SFALL_CONFIG_MOVIE_TIMER_ARTIMER3 = "MovieTimer_artimer3",
-//     SFALL_CONFIG_MOVIE_TIMER_ARTIMER4 = "MovieTimer_artimer4",
-//     SFALL_CONFIG_CITY_REPUTATION_LIST_KEY = "CityRepsList",
-//     SFALL_CONFIG_UNARMED_FILE_KEY = "UnarmedFile",
-//     SFALL_CONFIG_DAMAGE_MOD_FORMULA_KEY = "DamageFormula",
-//     SFALL_CONFIG_BONUS_HTH_DAMAGE_FIX_KEY = "BonusHtHDamageFix",
-//     SFALL_CONFIG_DISPLAY_BONUS_DAMAGE_KEY = "DisplayBonusDamage",
-//     SFALL_CONFIG_USE_LOCKPICK_FRM_KEY = "Lockpick",
-//     SFALL_CONFIG_USE_STEAL_FRM_KEY = "Steal",
-//     SFALL_CONFIG_USE_TRAPS_FRM_KEY = "Traps",
-//     SFALL_CONFIG_USE_FIRST_AID_FRM_KEY = "FirstAid",
-//     SFALL_CONFIG_USE_DOCTOR_FRM_KEY = "Doctor",
-//     SFALL_CONFIG_USE_SCIENCE_FRM_KEY = "Science",
-//     SFALL_CONFIG_USE_REPAIR_FRM_KEY = "Repair",
-//     SFALL_CONFIG_SCIENCE_REPAIR_TARGET_TYPE_KEY = "ScienceOnCritters",
-//     SFALL_CONFIG_GAME_DIALOG_FIX_KEY = "DialogueFix",
-//     SFALL_CONFIG_TWEAKS_FILE_KEY = "TweaksFile",
-//     SFALL_CONFIG_GAME_DIALOG_GENDER_WORDS_KEY = "DialogGenderWords",
-//     SFALL_CONFIG_TOWN_MAP_HOTKEYS_FIX_KEY = "TownMapHotkeysFix",
-//     SFALL_CONFIG_EXTRA_MESSAGE_LISTS_KEY = "ExtraGameMsgFileList",
-//     SFALL_CONFIG_NUMBERS_IS_DIALOG_KEY = "NumbersInDialogue",
-//     SFALL_CONFIG_INI_CONFIG_FOLDER = "IniConfigFolder",
-//     SFALL_CONFIG_GLOBAL_SCRIPT_PATHS = "GlobalScriptPaths",
-//     SFALL_CONFIG_AUTO_QUICK_SAVE = "AutoQuickSave",
-//     SFALL_CONFIG_BURST_MOD_DEFAULT_CENTER_MULTIPLIER = 1,
-//     SFALL_CONFIG_BURST_MOD_DEFAULT_CENTER_DIVISOR = 3,
-//     SFALL_CONFIG_BURST_MOD_DEFAULT_TARGET_MULTIPLIER = 1,
-//     SFALL_CONFIG_BURST_MOD_DEFAULT_TARGET_DIVISOR = 2,
-// }
-
-// enum MainMenuOption {
-//     MAIN_MENU_INTRO = 0,
-//     MAIN_MENU_NEW_GAME = 1,
-//     MAIN_MENU_LOAD_GAME = 2,
-//     MAIN_MENU_SCREENSAVER = 3,
-//     MAIN_MENU_TIMEOUT = 4,
-//     MAIN_MENU_CREDITS = 5,
-//     MAIN_MENU_QUOTES = 6,
-//     MAIN_MENU_EXIT = 7,
-//     MAIN_MENU_SELFRUN = 9,
-//     MAIN_MENU_OPTIONS = 10,
-// }
-
-// enum WindowFlags {
-//     // Use system window flags which are set during game startup and does not
-//     // change afterwards.
-//     WINDOW_USE_DEFAULTS = 0x1,
-//     WINDOW_DONT_MOVE_TOP = 0x2,
-//     WINDOW_MOVE_ON_TOP = 0x4,
-//     WINDOW_HIDDEN = 0x8,
-//     // Sfall calls this Exclusive.
-//     WINDOW_MODAL = 0x10,
-//     WINDOW_TRANSPARENT = 0x20,
-//     WINDOW_FLAG_0x40 = 0x40,
-
-//     /// Specifies that the window is draggable by clicking and moving anywhere
-//     /// in its background.
-//     WINDOW_DRAGGABLE_BY_BACKGROUND = 0x80,
-//     WINDOW_MANAGED = 0x100,
-// }
-
-// enum ObjectFlags {
-//     OBJECT_HIDDEN = 0x01,
-
-//     // Specifies that the object should not be saved to the savegame file.
-//     //
-//     // This flag is used in these situations:
-//     //  - To prevent saving of system objects like dude (which has separate
-//     // saving routine), egg, mouse cursors, etc.
-//     //  - To prevent saving of temporary objects (projectiles, explosion
-//     // effects, etc.).
-//     //  - To prevent saving of objects which cannot be removed for some reason,
-//     // like objects trying to delete themselves from scripting engine (used
-//     // together with `OBJECT_HIDDEN` to prevent affecting game world).
-//     OBJECT_NO_SAVE = 0x04,
-//     OBJECT_FLAT = 0x08,
-//     OBJECT_NO_BLOCK = 0x10,
-//     OBJECT_LIGHTING = 0x20,
-
-//     // Specifies that the object should not be removed (freed) from the game
-//     // world for whatever reason.
-//     //
-//     // This flag is used to prevent freeing of system objects like dude, egg,
-//     // mouse cursors, etc.
-//     OBJECT_NO_REMOVE = 0x400,
-//     OBJECT_MULTIHEX = 0x800,
-//     OBJECT_NO_HIGHLIGHT = 0x1000,
-//     OBJECT_QUEUED = 0x2000, // set if there was/is any event for the object
-//     OBJECT_TRANS_RED = 0x4000,
-//     OBJECT_TRANS_NONE = 0x8000,
-//     OBJECT_TRANS_WALL = 0x10000,
-//     OBJECT_TRANS_GLASS = 0x20000,
-//     OBJECT_TRANS_STEAM = 0x40000,
-//     OBJECT_TRANS_ENERGY = 0x80000,
-//     OBJECT_IN_LEFT_HAND = 0x1000000,
-//     OBJECT_IN_RIGHT_HAND = 0x2000000,
-//     OBJECT_WORN = 0x4000000,
-//     OBJECT_WALL_TRANS_END = 0x10000000,
-//     OBJECT_LIGHT_THRU = 0x20000000,
-//     OBJECT_SEEN = 0x40000000,
-//     OBJECT_SHOOT_THRU = 0x80000000,
-
-//     OBJECT_IN_ANY_HAND = OBJECT_IN_LEFT_HAND | OBJECT_IN_RIGHT_HAND,
-//     OBJECT_EQUIPPED = OBJECT_IN_ANY_HAND | OBJECT_WORN,
-//     OBJECT_FLAG_0xFC000 = OBJECT_TRANS_ENERGY
-//         | OBJECT_TRANS_STEAM
-//         | OBJECT_TRANS_GLASS
-//         | OBJECT_TRANS_WALL
-//         | OBJECT_TRANS_NONE
-//         | OBJECT_TRANS_RED,
-//     OBJECT_OPEN_DOOR = OBJECT_SHOOT_THRU | OBJECT_LIGHT_THRU | OBJECT_NO_BLOCK,
-// }
-
-// enum LoadSaveMode {
-//     // Special case - loading game from main menu.
-//     LOAD_SAVE_MODE_FROM_MAIN_MENU = 0,
-
-//     // Normal (full-screen) save/load screen.
-//     LOAD_SAVE_MODE_NORMAL = 1,
-
-//     // Quick load/save.
-//     LOAD_SAVE_MODE_QUICK = 2,
-// }
-
-// enum Dam {
-//     DAM_KNOCKED_OUT = 0x01,
-//     DAM_KNOCKED_DOWN = 0x02,
-//     DAM_CRIP_LEG_LEFT = 0x04,
-//     DAM_CRIP_LEG_RIGHT = 0x08,
-//     DAM_CRIP_ARM_LEFT = 0x10,
-//     DAM_CRIP_ARM_RIGHT = 0x20,
-//     DAM_BLIND = 0x40,
-//     DAM_DEAD = 0x80,
-//     DAM_HIT = 0x100,
-//     DAM_CRITICAL = 0x200,
-//     DAM_ON_FIRE = 0x400,
-//     DAM_BYPASS = 0x800,
-//     DAM_EXPLODE = 0x1000,
-//     DAM_DESTROY = 0x2000,
-//     DAM_DROP = 0x4000,
-//     DAM_LOSE_TURN = 0x8000,
-//     DAM_HIT_SELF = 0x10000,
-//     DAM_LOSE_AMMO = 0x20000,
-//     DAM_DUD = 0x40000,
-//     DAM_HURT_SELF = 0x80000,
-//     DAM_RANDOM_HIT = 0x100000,
-//     DAM_CRIP_RANDOM = 0x200000,
-//     DAM_BACKWASH = 0x400000,
-//     DAM_PERFORM_REVERSE = 0x800000,
-//     DAM_CRIP_LEG_ANY = DAM_CRIP_LEG_LEFT | DAM_CRIP_LEG_RIGHT,
-//     DAM_CRIP_ARM_ANY = DAM_CRIP_ARM_LEFT | DAM_CRIP_ARM_RIGHT,
-//     DAM_CRIP = DAM_CRIP_LEG_ANY | DAM_CRIP_ARM_ANY | DAM_BLIND,
-// }
 
 // 0x48099C
 fn falloutMain(argv: Vec<str>) -> u32 {
@@ -451,8 +255,9 @@ fn falloutInit(argc: u32, argv: Vec<str>) -> bool {
 //
 // 0x480D0C
 fn main_reset_system() -> u32 {
-    gameReset();
-
+    unsafe {
+        gameReset();
+    }
     return 1;
 }
 
@@ -460,12 +265,14 @@ fn main_reset_system() -> u32 {
 //
 // 0x480D18
 fn main_exit_system() {
-    backgroundSoundDelete();
+    unsafe {
+        backgroundSoundDelete();
 
-    // NOTE: Uninline.
-    _main_selfrun_exit();
+        // NOTE: Uninline.
+        _main_selfrun_exit();
 
-    gameExit();
+        gameExit();
+    }
 }
 
 // 0x480D4C
