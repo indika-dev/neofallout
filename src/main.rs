@@ -2,28 +2,104 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
+use ini::Ini;
 use std::fs::File;
 
 use neofallout::{
     autorunMutexCreate, colorPaletteLoad, debugPrint, gameMoviePlay, lsgLoadGame,
-    mainMenuWindowFree, mainMenuWindowHandleEvents, mainMenuWindowHide, paletteFadeTo,
-    screenGetHeight, screenGetWidth, sfall_gl_scr_exec_start_proc, windowCreate, windowDestroy,
-    Dam, LoadSaveMode, MainMenuOption, MouseCursorType, ObjectFlags, WindowFlags, _map_exit,
-    _map_init, autorunMutexClose, backgroundSoundDelete, creditsOpen, cursorIsHidden,
-    doPreferences, endgameSetupDeathEnding, fileNameListInit, gameHandleKey, gameInitWithOptions,
-    gameMouseSetCursor, inputGetInput, mainMenuWindowFree, mapHandleTransition, mouseHideCursor,
-    mouseShowCursor, objectHide, objectShow, renderPresent, scriptsDisable, scriptsEnable,
-    scriptsHandleRequests, selfrunFreeFileList, selfrunInitFileList, sfall_gl_scr_process_main,
-    wmMapMusicStart, SelfrunData, _proto_dude_init, _win_list_select, artCacheFlush,
-    backgroundSoundDelete, blitBufferToBuffer, colorCycleDisable, endgameDeathEndingGetFileName,
-    inputEventQueueReset, keyboardReset, main_reset_system, memset, randomSeedPrerandom,
-    selfrunPreparePlayback, selfrunPrepareRecording, selfrunRecordingLoop, windowGetBuffer,
-    FrmImage, _gsound_speech_play_preloaded, bufferFill, characterSelectorOpen, colorCycleEnable,
-    fileClose, fileOpen, fileReadChar, fontDrawText, fontGetLineHeight, free, gameExit,
-    gameMouseSetCursor, gameReset, getTicks, inputBlockForTocks, inputPauseForTocks, mapLoadByName,
-    mouseGetEvent, renderPresent, sizeof, snprintf, speechDelete, speechLoad, speechSetEndCallback,
-    speechSetEndCallback, strrchr, windowRefresh, wordWrap, SFALL_CONFIG_KEYS,
+    mainMenuWindowHandleEvents, mainMenuWindowHide, paletteFadeTo, screenGetHeight, screenGetWidth,
+    sfall_gl_scr_exec_start_proc, windowCreate, windowDestroy, Dam, LoadSaveMode, MainMenuOption,
+    MouseCursorType, ObjectFlags, WindowFlags, _map_exit, _map_init, autorunMutexClose,
+    backgroundSoundDelete, creditsOpen, cursorIsHidden, doPreferences, endgameSetupDeathEnding,
+    fileNameListInit, gameHandleKey, gameInitWithOptions, inputGetInput, mainMenuWindowFree,
+    mapHandleTransition, mouseHideCursor, mouseShowCursor, objectHide, objectShow, renderPresent,
+    scriptsDisable, scriptsEnable, scriptsHandleRequests, selfrunFreeFileList, selfrunInitFileList,
+    sfall_gl_scr_process_main, wmMapMusicStart, SelfrunData, _proto_dude_init, _win_list_select,
+    artCacheFlush, blitBufferToBuffer, colorCycleDisable, endgameDeathEndingGetFileName,
+    inputEventQueueReset, keyboardReset, randomSeedPrerandom, selfrunPreparePlayback,
+    selfrunPrepareRecording, selfrunRecordingLoop, windowGetBuffer, FrmImage,
+    _gsound_background_play_level_music, _gsound_speech_play_preloaded, bufferFill,
+    characterSelectorOpen, colorCycleEnable, colorCycleEnabled, configGetInt, configGetString,
+    fileClose, fileNameListFree, fileOpen, fileReadChar, gameExit, gameMouseSetCursor, gameReset,
+    getTicks, inputBlockForTocks, inputPauseForTocks, mainMenuWindowInit, mainMenuWindowUnhide,
+    mapLoadByName, mouseGetEvent, selfrunPlaybackLoop, speechDelete, speechLoad,
+    speechSetEndCallback, windowRefresh, wordWrap, Config, Dictionary, GameMovie, GameMovieFlags,
 };
+
+const SELFRUN_RECORDING_FILE_NAME_LENGTH: i32 = 13;
+const SELFRUN_MAP_FILE_NAME_LENGTH: i32 = 13;
+/*
+from sfall_config.h
+*/
+const SFALL_CONFIG_FILE_NAME: &str = "ddraw.ini";
+const SFALL_CONFIG_MISC_KEY: &str = "Misc";
+const SFALL_CONFIG_SCRIPTS_KEY: &str = "Scripts";
+const SFALL_CONFIG_DUDE_NATIVE_LOOK_JUMPSUIT_MALE_KEY: &str = "MaleDefaultModel";
+const SFALL_CONFIG_DUDE_NATIVE_LOOK_JUMPSUIT_FEMALE_KEY: &str = "FemaleDefaultModel";
+const SFALL_CONFIG_DUDE_NATIVE_LOOK_TRIBAL_MALE_KEY: &str = "MaleStartModel";
+const SFALL_CONFIG_DUDE_NATIVE_LOOK_TRIBAL_FEMALE_KEY: &str = "FemaleStartModel";
+const SFALL_CONFIG_START_YEAR: &str = "StartYear";
+const SFALL_CONFIG_START_MONTH: &str = "StartMonth";
+const SFALL_CONFIG_START_DAY: &str = "StartDay";
+const SFALL_CONFIG_MAIN_MENU_BIG_FONT_COLOR_KEY: &str = "MainMenuBigFontColour";
+const SFALL_CONFIG_MAIN_MENU_CREDITS_OFFSET_X_KEY: &str = "MainMenuCreditsOffsetX";
+const SFALL_CONFIG_MAIN_MENU_CREDITS_OFFSET_Y_KEY: &str = "MainMenuCreditsOffsetY";
+const SFALL_CONFIG_MAIN_MENU_FONT_COLOR_KEY: &str = "MainMenuFontColour";
+const SFALL_CONFIG_MAIN_MENU_OFFSET_X_KEY: &str = "MainMenuOffsetX";
+const SFALL_CONFIG_MAIN_MENU_OFFSET_Y_KEY: &str = "MainMenuOffsetY";
+const SFALL_CONFIG_SKIP_OPENING_MOVIES_KEY: &str = "SkipOpeningMovies";
+const SFALL_CONFIG_STARTING_MAP_KEY: &str = "StartingMap";
+const SFALL_CONFIG_KARMA_FRMS_KEY: &str = "KarmaFRMs";
+const SFALL_CONFIG_KARMA_POINTS_KEY: &str = "KarmaPoints";
+const SFALL_CONFIG_DISPLAY_KARMA_CHANGES_KEY: &str = "DisplayKarmaChanges";
+const SFALL_CONFIG_OVERRIDE_CRITICALS_MODE_KEY: &str = "OverrideCriticalTable";
+const SFALL_CONFIG_OVERRIDE_CRITICALS_FILE_KEY: &str = "OverrideCriticalFile";
+const SFALL_CONFIG_REMOVE_CRITICALS_TIME_LIMITS_KEY: &str = "RemoveCriticalTimelimits";
+const SFALL_CONFIG_BOOKS_FILE_KEY: &str = "BooksFile";
+const SFALL_CONFIG_ELEVATORS_FILE_KEY: &str = "ElevatorsFile";
+const SFALL_CONFIG_CONSOLE_OUTPUT_FILE_KEY: &str = "ConsoleOutputPath";
+const SFALL_CONFIG_PREMADE_CHARACTERS_FILE_NAMES_KEY: &str = "PremadePaths";
+const SFALL_CONFIG_PREMADE_CHARACTERS_FACE_FIDS_KEY: &str = "PremadeFIDs";
+const SFALL_CONFIG_BURST_MOD_ENABLED_KEY: &str = "ComputeSprayMod";
+const SFALL_CONFIG_BURST_MOD_CENTER_MULTIPLIER_KEY: &str = "ComputeSpray_CenterMult";
+const SFALL_CONFIG_BURST_MOD_CENTER_DIVISOR_KEY: &str = "ComputeSpray_CenterDiv";
+const SFALL_CONFIG_BURST_MOD_TARGET_MULTIPLIER_KEY: &str = "ComputeSpray_TargetMult";
+const SFALL_CONFIG_BURST_MOD_TARGET_DIVISOR_KEY: &str = "ComputeSpray_TargetDiv";
+const SFALL_CONFIG_DYNAMITE_MIN_DAMAGE_KEY: &str = "Dynamite_DmgMin";
+const SFALL_CONFIG_DYNAMITE_MAX_DAMAGE_KEY: &str = "Dynamite_DmgMax";
+const SFALL_CONFIG_PLASTIC_EXPLOSIVE_MIN_DAMAGE_KEY: &str = "PlasticExplosive_DmgMin";
+const SFALL_CONFIG_PLASTIC_EXPLOSIVE_MAX_DAMAGE_KEY: &str = "PlasticExplosive_DmgMax";
+const SFALL_CONFIG_EXPLOSION_EMITS_LIGHT_KEY: &str = "ExplosionsEmitLight";
+const SFALL_CONFIG_MOVIE_TIMER_ARTIMER1: &str = "MovieTimer_artimer1";
+const SFALL_CONFIG_MOVIE_TIMER_ARTIMER2: &str = "MovieTimer_artimer2";
+const SFALL_CONFIG_MOVIE_TIMER_ARTIMER3: &str = "MovieTimer_artimer3";
+const SFALL_CONFIG_MOVIE_TIMER_ARTIMER4: &str = "MovieTimer_artimer4";
+const SFALL_CONFIG_CITY_REPUTATION_LIST_KEY: &str = "CityRepsList";
+const SFALL_CONFIG_UNARMED_FILE_KEY: &str = "UnarmedFile";
+const SFALL_CONFIG_DAMAGE_MOD_FORMULA_KEY: &str = "DamageFormula";
+const SFALL_CONFIG_BONUS_HTH_DAMAGE_FIX_KEY: &str = "BonusHtHDamageFix";
+const SFALL_CONFIG_DISPLAY_BONUS_DAMAGE_KEY: &str = "DisplayBonusDamage";
+const SFALL_CONFIG_USE_LOCKPICK_FRM_KEY: &str = "Lockpick";
+const SFALL_CONFIG_USE_STEAL_FRM_KEY: &str = "Steal";
+const SFALL_CONFIG_USE_TRAPS_FRM_KEY: &str = "Traps";
+const SFALL_CONFIG_USE_FIRST_AID_FRM_KEY: &str = "FirstAid";
+const SFALL_CONFIG_USE_DOCTOR_FRM_KEY: &str = "Doctor";
+const SFALL_CONFIG_USE_SCIENCE_FRM_KEY: &str = "Science";
+const SFALL_CONFIG_USE_REPAIR_FRM_KEY: &str = "Repair";
+const SFALL_CONFIG_SCIENCE_REPAIR_TARGET_TYPE_KEY: &str = "ScienceOnCritters";
+const SFALL_CONFIG_GAME_DIALOG_FIX_KEY: &str = "DialogueFix";
+const SFALL_CONFIG_TWEAKS_FILE_KEY: &str = "TweaksFile";
+const SFALL_CONFIG_GAME_DIALOG_GENDER_WORDS_KEY: &str = "DialogGenderWords";
+const SFALL_CONFIG_TOWN_MAP_HOTKEYS_FIX_KEY: &str = "TownMapHotkeysFix";
+const SFALL_CONFIG_EXTRA_MESSAGE_LISTS_KEY: &str = "ExtraGameMsgFileList";
+const SFALL_CONFIG_NUMBERS_IS_DIALOG_KEY: &str = "NumbersInDialogue";
+const SFALL_CONFIG_INI_CONFIG_FOLDER: &str = "IniConfigFolder";
+const SFALL_CONFIG_GLOBAL_SCRIPT_PATHS: &str = "GlobalScriptPaths";
+const SFALL_CONFIG_AUTO_QUICK_SAVE: &str = "AutoQuickSave";
+const SFALL_CONFIG_BURST_MOD_DEFAULT_CENTER_MULTIPLIER: i32 = 1;
+const SFALL_CONFIG_BURST_MOD_DEFAULT_CENTER_DIVISOR: i32 = 3;
+const SFALL_CONFIG_BURST_MOD_DEFAULT_TARGET_MULTIPLIER: i32 = 1;
+const SFALL_CONFIG_BURST_MOD_DEFAULT_TARGET_DIVISOR: i32 = 2;
 
 const DEATH_WINDOW_WIDTH: u8 = 640;
 const DEATH_WINDOW_HEIGHT: u8 = 480;
@@ -36,7 +112,7 @@ static _main_game_paused: bool = false;
 
 // 0x5194DC
 // static char** _main_selfrun_list = NULL;
-static _main_selfrun_list: Vec<str> = Vec::new();
+static _main_selfrun_list: Vec<String> = Vec::new();
 
 // 0x5194E0
 static _main_selfrun_count: u32 = 0;
@@ -61,28 +137,30 @@ static gMainMenuScreensaverCycle: bool = true;
 static _main_death_voiceover_done: bool = true;
 
 // 0x48099C
-fn falloutMain(argv: Vec<str>) -> u32 {
+fn falloutMain(argc: i32, argv: Vec<String>) -> u32 {
     unsafe {
-        if (!autorunMutexCreate()) {
+        if !autorunMutexCreate() {
             return 1;
         }
 
-        if (!falloutInit(argc, argv)) {
+        if !falloutInit(argc, argv) {
             return 1;
         }
-
+        let sfallConfig = Ini::load_from_file(SFALL_CONFIG_FILE_NAME).unwrap();
+        let gSfallConfig: Config = Dictionary::new();
         // SFALL: Allow to skip intro movies
         let mut skipOpeningMovies: i32 = 0;
         configGetInt(
             &gSfallConfig,
-            SFALL_CONFIG_KEYS::SFALL_CONFIG_MISC_KEY,
-            SFALL_CONFIG_KEYS::SFALL_CONFIG_SKIP_OPENING_MOVIES_KEY,
+            SFALL_CONFIG_MISC_KEY,
+            SFALL_CONFIG_SKIP_OPENING_MOVIES_KEY,
             &mut skipOpeningMovies as *mut _,
+            0,
         );
-        if (skipOpeningMovies < 1) {
-            gameMoviePlay(MOVIE_IPLOGO, GAME_MOVIE_FADE_IN);
-            gameMoviePlay(MOVIE_INTRO, 0);
-            gameMoviePlay(MOVIE_CREDITS, 0);
+        if skipOpeningMovies < 1 {
+            gameMoviePlay(GameMovie::MOVIE_IPLOGO, GameMovieFlags::GAME_MOVIE_FADE_IN);
+            gameMoviePlay(GameMovie::MOVIE_INTRO, 0);
+            gameMoviePlay(GameMovie::MOVIE_CREDITS, 0);
         }
 
         if (mainMenuWindowInit() == 0) {
@@ -99,22 +177,28 @@ fn falloutMain(argv: Vec<str>) -> u32 {
                 match mainMenuRc {
                     MainMenuOption::MAIN_MENU_INTRO => {
                         mainMenuWindowHide(true);
-                        gameMoviePlay(MOVIE_INTRO, GAME_MOVIE_PAUSE_MUSIC);
-                        gameMoviePlay(MOVIE_CREDITS, 0);
+                        gameMoviePlay(
+                            GameMovie::MOVIE_INTRO,
+                            GameMovieFlags::GAME_MOVIE_PAUSE_MUSIC,
+                        );
+                        gameMoviePlay(GameMovie::MOVIE_CREDITS, 0);
                     }
                     MainMenuOption::MAIN_MENU_NEW_GAME => {
                         mainMenuWindowHide(true);
                         mainMenuWindowFree();
                         if (characterSelectorOpen() == 2) {
-                            gameMoviePlay(MOVIE_ELDER, GAME_MOVIE_STOP_MUSIC);
+                            gameMoviePlay(
+                                GameMovie::MOVIE_ELDER,
+                                GameMovieFlags::GAME_MOVIE_STOP_MUSIC,
+                            );
                             randomSeedPrerandom(-1);
 
                             // SFALL: Override starting map.
                             let mut mapName: str = String::new();
                             if (configGetString(
                                 &gSfallConfig,
-                                SFALL_CONFIG_KEYS::SFALL_CONFIG_MISC_KEY,
-                                SFALL_CONFIG_KEYS::SFALL_CONFIG_STARTING_MAP_KEY,
+                                SFALL_CONFIG_MISC_KEY,
+                                SFALL_CONFIG_STARTING_MAP_KEY,
                                 &mapName,
                             )) {
                                 if (mapName.is_empty()) {
@@ -234,7 +318,7 @@ fn falloutMain(argv: Vec<str>) -> u32 {
 }
 
 // 0x480CC0
-fn falloutInit(argc: u32, argv: Vec<str>) -> bool {
+fn falloutInit(argc: u32, argv: Vec<String>) -> bool {
     unsafe {
         if (gameInitWithOptions("FALLOUT II", false, 0, 0, argc, argv) == -1) {
             return false;
@@ -332,8 +416,10 @@ fn main_loadgame_new() -> i32 {
 
 // 0x480E34
 fn main_unload_new() {
-    objectHide(gDude, NULL);
-    _map_exit();
+    unsafe {
+        objectHide(gDude, NULL);
+        _map_exit();
+    }
 }
 
 // 0x480E48
@@ -513,7 +599,10 @@ fn _main_selfrun_play() {
             }
         } else {
             mainMenuWindowHide(true);
-            gameMoviePlay(MOVIE_INTRO, GAME_MOVIE_PAUSE_MUSIC);
+            gameMoviePlay(
+                GameMovie::MOVIE_INTRO,
+                GameMovieFlags::GAME_MOVIE_PAUSE_MUSIC,
+            );
         }
 
         gMainMenuScreensaverCycle = !gMainMenuScreensaverCycle;
@@ -525,7 +614,7 @@ fn showDeath() {
     unsafe {
         artCacheFlush();
         colorCycleDisable();
-        gameMouseSetCursor(MOUSE_CURSOR_NONE);
+        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_NONE);
 
         let mut oldCursorIsHidden: bool = cursorIsHidden();
         if (oldCursorIsHidden) {
@@ -540,7 +629,7 @@ fn showDeath() {
             DEATH_WINDOW_WIDTH,
             DEATH_WINDOW_HEIGHT,
             0,
-            WINDOW_MOVE_ON_TOP,
+            WindowFlags::WINDOW_MOVE_ON_TOP,
         );
         if (win != -1) {
             loop {
@@ -551,7 +640,7 @@ fn showDeath() {
 
                 // DEATH.FRM
                 let mut backgroundFrmImage: FrmImage;
-                let fid: i32 = buildFid(OBJ_TYPE_INTERFACE, 309, 0, 0, 0);
+                let fid: i32 = buildFid(ObjectFlags::OBJ_TYPE_INTERFACE, 309, 0, 0, 0);
                 if (!backgroundFrmImage.lock(fid)) {
                     break;
                 }
@@ -578,7 +667,7 @@ fn showDeath() {
                 );
                 backgroundFrmImage.unlock();
 
-                const deathFileName: str = endgameDeathEndingGetFileName();
+                const deathFileName: String = endgameDeathEndingGetFileName();
 
                 if (settings.preferences.subtitles) {
                     let mut text: str;
@@ -662,7 +751,7 @@ fn showDeath() {
             mouseHideCursor();
         }
 
-        gameMouseSetCursor(MOUSE_CURSOR_ARROW);
+        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_ARROW);
 
         colorCycleEnable();
     }
@@ -721,7 +810,7 @@ fn _mainDeathGrabTextFile(fileName: str, dest: str) -> i32 {
 
 // 0x481598
 fn _mainDeathWordWrap(
-    text: st,
+    text: String,
     width: i32,
     /*short* */ beginnings: i8,
     /*short* */ count: i8,

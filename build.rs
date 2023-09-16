@@ -16,45 +16,47 @@ fn main() {
 
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/wrapper.h");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     // all SDL related stuff isn't transpiled to bindings
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    add_art_h_to_bindings(&out_path);
-    add_autorun_h_to_bindings(&out_path);
-    add_color_h_to_bindings(&out_path);
-    add_credits_h_to_bindings(&out_path);
-    add_cycle_h_to_bindings(&out_path);
-    add_db_h_to_bindings(&out_path);
-    add_debug_h_to_bindings(&out_path);
-    add_draw_h_to_bindings(&out_path);
-    add_endgame_h_to_bindings(&out_path);
-    add_game_h_to_bindings(&out_path);
-    add_game_mouse_h_to_bindings(&out_path);
-    add_game_movie_h_to_bindings(&out_path);
-    add_game_sound_h_to_bindings(&out_path);
-    add_input_h_to_bindings(&out_path);
-    // add_kb_h_to_bindings(&out_path);
-    add_loadsave_h_to_bindings(&out_path);
-    add_mainmenu_h_to_bindings(&out_path);
-    add_object_h_to_bindings(&out_path);
-    add_palette_h_to_bindings(&out_path);
-    add_platform_compat_h_to_bindings(&out_path);
-    add_preferences_h_to_bindings(&out_path);
-    add_proto_h_to_bindings(&out_path);
-    add_random_h_to_bindings(&out_path);
-    add_script_h_to_bindings(&out_path);
-    add_selfrun_h_to_bindings(&out_path);
-    add_settings_h_to_bindings(&out_path);
-    add_sfall_config_h_to_bindings(&out_path);
-    add_sfall_global_scripts_h_to_bindings(&out_path);
-    // add_svga_h_to_bindings(&out_path);
-    add_text_font_h_to_bindings(&out_path);
-    add_window_h_to_bindings(&out_path);
-    add_window_manager_h_to_bindings(&out_path);
-    add_window_manager_private_h_to_bindings(&out_path);
-    add_word_wrap_h_to_bindings(&out_path);
-    add_worldmap_h_to_bindings(&out_path);
+    add_wrapper_h_to_bindings(&out_path);
+    // add_art_h_to_bindings(&out_path);
+    // add_autorun_h_to_bindings(&out_path);
+    // add_color_h_to_bindings(&out_path);
+    // add_credits_h_to_bindings(&out_path);
+    // add_cycle_h_to_bindings(&out_path);
+    // add_db_h_to_bindings(&out_path);
+    // add_debug_h_to_bindings(&out_path);
+    // add_draw_h_to_bindings(&out_path);
+    // add_endgame_h_to_bindings(&out_path);
+    // add_game_h_to_bindings(&out_path);
+    // add_game_mouse_h_to_bindings(&out_path);
+    // add_game_movie_h_to_bindings(&out_path);
+    // add_game_sound_h_to_bindings(&out_path);
+    // add_input_h_to_bindings(&out_path);
+    // // add_kb_h_to_bindings(&out_path);
+    // add_loadsave_h_to_bindings(&out_path);
+    // add_mainmenu_h_to_bindings(&out_path);
+    // add_object_h_to_bindings(&out_path);
+    // add_palette_h_to_bindings(&out_path);
+    // add_platform_compat_h_to_bindings(&out_path);
+    // add_preferences_h_to_bindings(&out_path);
+    // add_proto_h_to_bindings(&out_path);
+    // add_random_h_to_bindings(&out_path);
+    // add_script_h_to_bindings(&out_path);
+    // add_selfrun_h_to_bindings(&out_path);
+    // add_settings_h_to_bindings(&out_path);
+    // add_sfall_config_h_to_bindings(&out_path);
+    // add_sfall_global_scripts_h_to_bindings(&out_path);
+    // // add_svga_h_to_bindings(&out_path);
+    // add_text_font_h_to_bindings(&out_path);
+    // add_window_h_to_bindings(&out_path);
+    // add_window_manager_h_to_bindings(&out_path);
+    // add_window_manager_private_h_to_bindings(&out_path);
+    // add_word_wrap_h_to_bindings(&out_path);
+    // add_worldmap_h_to_bindings(&out_path);
 }
 
 fn assign_defaults(builder: bindgen::Builder) -> bindgen::Builder {
@@ -85,6 +87,132 @@ fn write_bindings(sourcefile: &str, builder: &bindgen::Builder, out_path: PathBu
     bindings
         .write_to_file(String::from("src/bindings_") + sourcefile + ".rs")
         .expect("Couldn't write bindings!");
+}
+
+fn add_wrapper_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
+    // The bindgen::Builder is the main entry point
+    // to bindgen, and lets you build up options for
+    // the resulting bindings.
+    let builder = bindgen::Builder::default()
+        .header("src/wrapper.h")
+        .allowlist_type("fallout::File")
+        .allowlist_type("fallout::FrmImage")
+        .allowlist_type("fallout::EndgameDeathEndingReason")
+        .allowlist_type("fallout::SoundEndCallback")
+        .allowlist_type("fallout::ObjectFlags")
+        .allowlist_type("fallout::InventoryItem")
+        .allowlist_type("fallout::Inventory")
+        .allowlist_type("fallout::WeaponObjectData")
+        .allowlist_type("fallout::AmmoItemData")
+        .allowlist_type("fallout::MiscItemData")
+        .allowlist_type("fallout::KeyItemData")
+        .allowlist_type("fallout::ItemObjectData")
+        .allowlist_type("fallout::CritterCombatData")
+        .allowlist_type("fallout::CritterObjectData")
+        .allowlist_type("fallout::DoorSceneryData")
+        .allowlist_type("fallout::StairsSceneryData")
+        .allowlist_type("fallout::ElevatorSceneryData")
+        .allowlist_type("fallout::LadderSceneryData")
+        .allowlist_type("fallout::SceneryObjectData")
+        .allowlist_type("fallout::MiscObjectData")
+        .allowlist_type("fallout::ObjectData")
+        .allowlist_type("fallout::Object")
+        .allowlist_type("fallout::MouseCursorType")
+        .allowlist_type("fallout::Dam")
+        .allowlist_type("fallout::WindowFlags")
+        .allowlist_type("fallout::FpsLimiter")
+        .allowlist_type("fallout::MainMenuOption")
+        .allowlist_type("fallout::LoadSaveMode")
+        .allowlist_type("fallout::GameMovie")
+        .allowlist_type("fallout::DictionaryReadProc")
+        .allowlist_type("fallout::DictionaryWriteProc")
+        .allowlist_type("fallout::DictionaryIO")
+        .allowlist_type("fallout::DictionaryEntry")
+        .allowlist_type("fallout::Dictionary")
+        .allowlist_type("fallout::Config")
+        .allowlist_type("fallout::GameMovieFlags")
+        .allowlist_function("fallout::autorunMutexCreate")
+        .allowlist_function("fallout::autorunMutexClose")
+        .allowlist_function("fallout::colorPaletteLoad")
+        .allowlist_function("fallout::paletteFadeTo")
+        .allowlist_function("fallout::debugPrint")
+        .allowlist_function("fallout::gameMoviePlay")
+        .allowlist_function("fallout::lsgLoadGame")
+        .allowlist_function("fallout::mainMenuWindowFree")
+        .allowlist_function("fallout::mainMenuWindowHide")
+        .allowlist_function("fallout::mainMenuWindowHandleEvents")
+        .allowlist_function("fallout::screenGetWidth")
+        .allowlist_function("fallout::screenGetHeight")
+        .allowlist_function("fallout::renderPresent")
+        .allowlist_function("fallout::sfall_gl_scr_exec_start_proc")
+        .allowlist_function("fallout::sfall_gl_scr_process_main")
+        .allowlist_function("fallout::windowCreate")
+        .allowlist_function("fallout::windowDestroy")
+        .allowlist_function("fallout::windowGetBuffer")
+        .allowlist_function("fallout::windowRefresh")
+        .allowlist_function("fallout::gameMouseSetCursor")
+        .allowlist_function("fallout::mouseGetEvent")
+        .allowlist_function("fallout::mouseShowCursor")
+        .allowlist_function("fallout::mouseHideCursor")
+        .allowlist_function("fallout::cursorIsHidden")
+        .allowlist_function("fallout::_map_init")
+        .allowlist_function("fallout::_map_exit")
+        .allowlist_function("fallout::backgroundSoundDelete")
+        .allowlist_function("fallout::_gsound_speech_play_preloaded")
+        .allowlist_function("fallout::speechDelete")
+        .allowlist_function("fallout::speechLoad")
+        .allowlist_function("fallout::speechSetEndCallback")
+        .allowlist_function("fallout::creditsOpen")
+        .allowlist_function("fallout::doPreferences")
+        .allowlist_function("fallout::endgameSetupDeathEnding")
+        .allowlist_function("fallout::endgameDeathEndingGetFileName")
+        .allowlist_function("fallout::fileNameListInit")
+        .allowlist_function("fallout::fileClose")
+        .allowlist_function("fallout::fileOpen")
+        .allowlist_function("fallout::fileReadChar")
+        .allowlist_function("fallout::gameHandleKey")
+        .allowlist_function("fallout::gameInitWithOptions")
+        .allowlist_function("fallout::gameExit")
+        .allowlist_function("fallout::gameReset")
+        .allowlist_function("fallout::inputGetInput")
+        .allowlist_function("fallout::inputEventQueueReset")
+        .allowlist_function("fallout::getTicks")
+        .allowlist_function("fallout::inputPauseForTocks")
+        .allowlist_function("fallout::inputBlockForTocks")
+        .allowlist_function("fallout::objectHide")
+        .allowlist_function("fallout::objectShow")
+        .allowlist_function("fallout::scriptsEnable")
+        .allowlist_function("fallout::scriptsDisable")
+        .allowlist_function("fallout::scriptsHandleRequests")
+        .allowlist_function("fallout::selfrunInitFileList")
+        .allowlist_function("fallout::selfrunFreeFileList")
+        .allowlist_function("fallout::selfrunPreparePlayback")
+        .allowlist_function("fallout::selfrunPrepareRecording")
+        .allowlist_function("fallout::selfrunRecordingLoop")
+        .allowlist_function("fallout::wmMapMusicStart")
+        .allowlist_function("fallout::mapLoadByName")
+        .allowlist_function("fallout::_proto_dude_init")
+        .allowlist_function("fallout::_win_list_select")
+        .allowlist_function("fallout::artCacheFlush")
+        .allowlist_function("fallout::blitBufferToBuffer")
+        .allowlist_function("fallout::bufferFill")
+        .allowlist_function("fallout::colorCycleDisable")
+        .allowlist_function("fallout::colorCycleEnabled")
+        .allowlist_function("fallout::colorCycleEnable")
+        .allowlist_function("fallout::keyboardReset")
+        .allowlist_function("fallout::randomSeedPrerandom")
+        .allowlist_function("fallout::characterSelectorOpen")
+        .allowlist_function("fallout::mapHandleTransition")
+        .allowlist_function("fallout::configGetString")
+        .allowlist_function("fallout::configGetInt")
+        .allowlist_function("fallout::mainMenuWindowInit")
+        .allowlist_function("fallout::mainMenuWindowUnhide")
+        .allowlist_function("fallout::_gsound_background_play_level_music")
+        .allowlist_function("fallout::fileNameListFree")
+        .allowlist_function("fallout::selfrunPlaybackLoop")
+        .allowlist_function("fallout::wordWrap");
+    write_bindings("fallout2ce_h", &builder, out_path.clone());
+    return builder;
 }
 
 fn add_worldmap_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
