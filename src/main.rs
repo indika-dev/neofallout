@@ -3,7 +3,17 @@
 #![allow(non_snake_case)]
 
 use ini::Ini;
-use std::fs::File;
+use log::{debug, error, LevelFilter};
+use log4rs::{
+    append::console::ConsoleAppender,
+    config::{Appender, Root},
+    Config,
+};
+use std::{
+    ffi::{c_char, CString},
+    fs::File,
+    u8,
+};
 
 use neofallout::{
     autorunMutexCreate, colorPaletteLoad, debugPrint, gameMoviePlay, lsgLoadGame,
@@ -23,7 +33,7 @@ use neofallout::{
     fileClose, fileNameListFree, fileOpen, fileReadChar, gameExit, gameMouseSetCursor, gameReset,
     getTicks, inputBlockForTocks, inputPauseForTocks, mainMenuWindowInit, mainMenuWindowUnhide,
     mapLoadByName, mouseGetEvent, selfrunPlaybackLoop, speechDelete, speechLoad,
-    speechSetEndCallback, windowRefresh, wordWrap, Config, Dictionary, GameMovie, GameMovieFlags,
+    speechSetEndCallback, windowRefresh, wordWrap, GameMovie, GameMovieFlags, Object,
 };
 
 const SELFRUN_RECORDING_FILE_NAME_LENGTH: i32 = 13;
@@ -101,8 +111,8 @@ const SFALL_CONFIG_BURST_MOD_DEFAULT_CENTER_DIVISOR: i32 = 3;
 const SFALL_CONFIG_BURST_MOD_DEFAULT_TARGET_MULTIPLIER: i32 = 1;
 const SFALL_CONFIG_BURST_MOD_DEFAULT_TARGET_DIVISOR: i32 = 2;
 
-const DEATH_WINDOW_WIDTH: u8 = 640;
-const DEATH_WINDOW_HEIGHT: u8 = 480;
+const DEATH_WINDOW_WIDTH: i32 = 640;
+const DEATH_WINDOW_HEIGHT: i32 = 480;
 
 // 0x5194C8
 const _mainMap: &str = "artemple.map";
@@ -115,7 +125,7 @@ static _main_game_paused: bool = false;
 static _main_selfrun_list: Vec<String> = Vec::new();
 
 // 0x5194E0
-static _main_selfrun_count: u32 = 0;
+static _main_selfrun_count: i32 = 0;
 
 // 0x5194E4
 static _main_selfrun_index: u32 = 0;
@@ -136,175 +146,186 @@ static gMainMenuScreensaverCycle: bool = true;
 // 0x614838
 static _main_death_voiceover_done: bool = true;
 
+static _game_user_wants_to_quit: bool = false;
+
+// 0x6639D0
+static mut gPalette: [u8; 256 * 3] = [0; 256 * 3];
+
+// 0x663CD0
+const gPaletteWhite: [u8; 256 * 3] = [63; 256 * 3];
+
+// 0x663FD0
+const gPaletteBlack: [u8; 256 * 3] = [0; 256 * 3];
+
 // 0x48099C
-fn falloutMain(argc: i32, argv: Vec<String>) -> u32 {
+fn falloutMain(argc: u32, argv: Vec<String>) -> u32 {
     unsafe {
         if !autorunMutexCreate() {
             return 1;
         }
-
-        if !falloutInit(argc, argv) {
-            return 1;
-        }
-        let sfallConfig = Ini::load_from_file(SFALL_CONFIG_FILE_NAME).unwrap();
-        let gSfallConfig: Config = Dictionary::new();
-        // SFALL: Allow to skip intro movies
-        let mut skipOpeningMovies: i32 = 0;
-        configGetInt(
-            &gSfallConfig,
-            SFALL_CONFIG_MISC_KEY,
-            SFALL_CONFIG_SKIP_OPENING_MOVIES_KEY,
-            &mut skipOpeningMovies as *mut _,
-            0,
+    }
+    if !falloutInit(argv) {
+        return 1;
+    }
+    let parsed_sfall_config = Ini::load_from_file(SFALL_CONFIG_FILE_NAME);
+    if parsed_sfall_config.is_err() {
+        error!(
+            "couldn't load {} ... stopping neofallout",
+            SFALL_CONFIG_FILE_NAME
         );
-        if skipOpeningMovies < 1 {
-            gameMoviePlay(GameMovie::MOVIE_IPLOGO, GameMovieFlags::GAME_MOVIE_FADE_IN);
-            gameMoviePlay(GameMovie::MOVIE_INTRO, 0);
-            gameMoviePlay(GameMovie::MOVIE_CREDITS, 0);
+        return 1;
+    }
+    let gsfallConfig: Ini = parsed_sfall_config.unwrap();
+    // SFALL: Allow to skip intro movies
+    let skipOpeningMovies: i32 = gsfallConfig
+        .get_from_or(
+            Some(SFALL_CONFIG_MISC_KEY),
+            SFALL_CONFIG_SKIP_OPENING_MOVIES_KEY,
+            "0",
+        )
+        .parse::<i32>()
+        .unwrap();
+    if skipOpeningMovies < 1 {
+        unsafe {
+            gameMoviePlay(
+                GameMovie::MOVIE_IPLOGO as i32,
+                GameMovieFlags::GAME_MOVIE_FADE_IN as i32,
+            );
+            gameMoviePlay(GameMovie::MOVIE_INTRO as i32, 0);
+            gameMoviePlay(GameMovie::MOVIE_CREDITS as i32, 0);
         }
-
-        if (mainMenuWindowInit() == 0) {
+    }
+    unsafe {
+        if mainMenuWindowInit() == 0 {
             let mut done: bool = false;
-            while (!done) {
+            while !done {
                 keyboardReset();
-                _gsound_background_play_level_music("07desert", 11);
-                mainMenuWindowUnhide(1);
+                let song_name: *const c_char =
+                    CString::new("07desert").unwrap().as_ptr() as *const c_char;
+                _gsound_background_play_level_music(song_name, 11);
+                mainMenuWindowUnhide(true);
 
                 mouseShowCursor();
-                let mainMenuRc: i8 = mainMenuWindowHandleEvents();
+                let mainMenuRc: i32 = mainMenuWindowHandleEvents();
                 mouseHideCursor();
 
-                match mainMenuRc {
-                    MainMenuOption::MAIN_MENU_INTRO => {
-                        mainMenuWindowHide(true);
+                if MainMenuOption::MAIN_MENU_INTRO as i32 == mainMenuRc {
+                    mainMenuWindowHide(true);
+                    gameMoviePlay(
+                        GameMovie::MOVIE_INTRO as i32,
+                        GameMovieFlags::GAME_MOVIE_PAUSE_MUSIC as i32,
+                    );
+                    gameMoviePlay(GameMovie::MOVIE_CREDITS as i32, 0);
+                } else if MainMenuOption::MAIN_MENU_NEW_GAME as i32 == mainMenuRc {
+                    mainMenuWindowHide(true);
+                    mainMenuWindowFree();
+                    if characterSelectorOpen() == 2 {
                         gameMoviePlay(
-                            GameMovie::MOVIE_INTRO,
-                            GameMovieFlags::GAME_MOVIE_PAUSE_MUSIC,
+                            GameMovie::MOVIE_ELDER as i32,
+                            GameMovieFlags::GAME_MOVIE_STOP_MUSIC as i32,
                         );
-                        gameMoviePlay(GameMovie::MOVIE_CREDITS, 0);
-                    }
-                    MainMenuOption::MAIN_MENU_NEW_GAME => {
-                        mainMenuWindowHide(true);
-                        mainMenuWindowFree();
-                        if (characterSelectorOpen() == 2) {
-                            gameMoviePlay(
-                                GameMovie::MOVIE_ELDER,
-                                GameMovieFlags::GAME_MOVIE_STOP_MUSIC,
-                            );
-                            randomSeedPrerandom(-1);
+                        randomSeedPrerandom(-1);
 
-                            // SFALL: Override starting map.
-                            let mut mapName: str = String::new();
-                            if (configGetString(
-                                &gSfallConfig,
-                                SFALL_CONFIG_MISC_KEY,
-                                SFALL_CONFIG_STARTING_MAP_KEY,
-                                &mapName,
-                            )) {
-                                if (mapName.is_empty()) {
-                                    mapName = _mainMap;
-                                }
-                            }
+                        // SFALL: Override starting map.
+                        let mapName: &str = gsfallConfig.get_from_or(
+                            Some(SFALL_CONFIG_MISC_KEY),
+                            SFALL_CONFIG_STARTING_MAP_KEY,
+                            _mainMap,
+                        );
 
-                            _main_load_new(mapName);
-                            free(mapNameCopy);
+                        _main_load_new(mapName.to_string());
 
-                            // SFALL: AfterNewGameStartHook.
-                            sfall_gl_scr_exec_start_proc();
+                        // SFALL: AfterNewGameStartHook.
+                        sfall_gl_scr_exec_start_proc();
 
-                            mainLoop();
-                            paletteFadeTo(gPaletteWhite);
+                        mainLoop();
+                        paletteFadeTo(gPaletteWhite.as_mut_ptr());
 
-                            // NOTE: Uninline.
-                            main_unload_new();
+                        // NOTE: Uninline.
+                        main_unload_new();
 
-                            // NOTE: Uninline.
-                            main_reset_system();
+                        // NOTE: Uninline.
+                        main_reset_system();
 
-                            if (_main_show_death_scene != 0) {
-                                showDeath();
-                                _main_show_death_scene = 0;
-                            }
-                        }
-
-                        mainMenuWindowInit();
-                    }
-                    MainMenuOption::MAIN_MENU_LOAD_GAME => {
-                        if (1) {
-                            let mut win: i32 = windowCreate(
-                                0,
-                                0,
-                                screenGetWidth(),
-                                screenGetHeight(),
-                                _colorTable[0],
-                                WindowFlags::WINDOW_MODAL | WindowFlags::WINDOW_MOVE_ON_TOP,
-                            );
-                            mainMenuWindowHide(true);
-                            mainMenuWindowFree();
-
-                            // NOTE: Uninline.
-                            main_loadgame_new();
-
-                            colorPaletteLoad("color.pal");
-                            paletteFadeTo(_cmap);
-                            let mut loadGameRc: i32 =
-                                lsgLoadGame(LoadSaveMode::LOAD_SAVE_MODE_FROM_MAIN_MENU);
-                            if (loadGameRc == -1) {
-                                debugPrint("\n ** Error running LoadGame()! **\n");
-                            } else if (loadGameRc != 0) {
-                                windowDestroy(win);
-                                win = -1;
-                                mainLoop();
-                            }
-                            paletteFadeTo(gPaletteWhite);
-                            if (win != -1) {
-                                windowDestroy(win);
-                            }
-
-                            // NOTE: Uninline.
-                            main_unload_new();
-
-                            // NOTE: Uninline.
-                            main_reset_system();
-
-                            if (_main_show_death_scene != 0) {
-                                showDeath();
-                                _main_show_death_scene = 0;
-                            }
-                            mainMenuWindowInit();
+                        if _main_show_death_scene {
+                            showDeath();
+                            _main_show_death_scene = false;
                         }
                     }
-                    MainMenuOption::MAIN_MENU_TIMEOUT => {
-                        debugPrint("Main menu timed-out\n");
-                        // FALLTHROUGH
+
+                    mainMenuWindowInit();
+                } else if MainMenuOption::MAIN_MENU_LOAD_GAME as i32 == mainMenuRc {
+                    let mut win: i32 = windowCreate(
+                        0,
+                        0,
+                        screenGetWidth(),
+                        screenGetHeight(),
+                        _colorTable[0],
+                        WindowFlags::WINDOW_MODAL as i32 | WindowFlags::WINDOW_MOVE_ON_TOP as i32,
+                    );
+                    mainMenuWindowHide(true);
+                    mainMenuWindowFree();
+
+                    // NOTE: Uninline.
+                    main_loadgame_new();
+
+                    let color_palette_name: *const c_char =
+                        CString::new("color.pal").unwrap().as_ptr() as *const c_char;
+                    colorPaletteLoad(color_palette_name);
+                    paletteFadeTo(_cmap);
+                    let mut loadGameRc: i32 =
+                        lsgLoadGame(LoadSaveMode::LOAD_SAVE_MODE_FROM_MAIN_MENU as i32);
+                    if loadGameRc == -1 {
+                        error!("Error running LoadGame()!");
+                    } else if loadGameRc != 0 {
+                        windowDestroy(win);
+                        win = -1;
+                        mainLoop();
                     }
-                    MainMenuOption::MAIN_MENU_SCREENSAVER => {
-                        _main_selfrun_play();
+                    paletteFadeTo(gPaletteWhite.as_mut_ptr());
+                    if win != -1 {
+                        windowDestroy(win);
                     }
-                    MainMenuOption::MAIN_MENU_OPTIONS => {
-                        mainMenuWindowHide(true);
-                        doPreferences(true);
+
+                    // NOTE: Uninline.
+                    main_unload_new();
+
+                    // NOTE: Uninline.
+                    main_reset_system();
+
+                    if _main_show_death_scene {
+                        showDeath();
+                        _main_show_death_scene = false;
                     }
-                    MainMenuOption::MAIN_MENU_CREDITS => {
-                        mainMenuWindowHide(true);
-                        creditsOpen("credits.txt", -1, false);
-                    }
-                    MainMenuOption::MAIN_MENU_QUOTES => {
-                        // NOTE: There is a strange cmp at 0x480C50. Both operands are
-                        // zero, set before the loop and do not modify afterwards. For
-                        // clarity this condition is omitted.
-                        mainMenuWindowHide(true);
-                        creditsOpen("quotes.txt", -1, true);
-                    }
-                    MainMenuOption::MAIN_MENU_EXIT | -1 => {
-                        done = true;
-                        mainMenuWindowHide(true);
-                        mainMenuWindowFree();
-                        backgroundSoundDelete();
-                    }
-                    MainMenuOption::MAIN_MENU_SELFRUN => {
-                        _main_selfrun_record();
-                    }
+                    mainMenuWindowInit();
+                } else if MainMenuOption::MAIN_MENU_TIMEOUT as i32 == mainMenuRc {
+                    debug!("Main menu timed-out");
+                    // FALLTHROUGH
+                } else if MainMenuOption::MAIN_MENU_SCREENSAVER as i32 == mainMenuRc {
+                    _main_selfrun_play();
+                } else if MainMenuOption::MAIN_MENU_OPTIONS as i32 == mainMenuRc {
+                    mainMenuWindowHide(true);
+                    doPreferences(true);
+                } else if MainMenuOption::MAIN_MENU_CREDITS as i32 == mainMenuRc {
+                    mainMenuWindowHide(true);
+                    let credits_txt: *const c_char =
+                        CString::new("credits.txt").unwrap().as_ptr() as *const c_char;
+                    creditsOpen(credits_txt, -1, false);
+                } else if MainMenuOption::MAIN_MENU_QUOTES as i32 == mainMenuRc {
+                    // NOTE: There is a strange cmp at 0x480C50. Both operands are
+                    // zero, set before the loop and do not modify afterwards. For
+                    // clarity this condition is omitted.
+                    mainMenuWindowHide(true);
+                    let quotes_txt: *const c_char =
+                        CString::new("quotes.txt").unwrap().as_ptr() as *const c_char;
+                    creditsOpen(quotes_txt, -1, true);
+                } else if MainMenuOption::MAIN_MENU_EXIT as i32 == mainMenuRc || -1 == mainMenuRc {
+                    done = true;
+                    mainMenuWindowHide(true);
+                    mainMenuWindowFree();
+                    backgroundSoundDelete();
+                } else if MainMenuOption::MAIN_MENU_SELFRUN as i32 == mainMenuRc {
+                    _main_selfrun_record();
                 }
             }
         }
@@ -318,17 +339,39 @@ fn falloutMain(argc: i32, argv: Vec<String>) -> u32 {
 }
 
 // 0x480CC0
-fn falloutInit(argc: u32, argv: Vec<String>) -> bool {
+fn falloutInit(argv: Vec<String>) -> bool {
     unsafe {
-        if (gameInitWithOptions("FALLOUT II", false, 0, 0, argc, argv) == -1) {
+        let title: *const c_char = CString::new("FALLOUT II").unwrap().as_ptr() as *const c_char;
+        let mut cmdLineArgs: Vec<*mut c_char> = argv
+            .iter()
+            .map(|x| CString::new(x.clone()).unwrap().into_raw())
+            .collect();
+        if gameInitWithOptions(
+            title,
+            false,
+            0,
+            0,
+            argv.len() as i32,
+            cmdLineArgs.as_mut_ptr(),
+        ) == -1
+        {
             return false;
         }
 
-        if (_main_selfrun_list != NULL) {
+        if _main_selfrun_list.len() >= 1 {
             _main_selfrun_exit();
         }
 
-        if (selfrunInitFileList(&_main_selfrun_list, &_main_selfrun_count) == 0) {
+        let mut converted_main_selfrun_list: Vec<*mut c_char> = _main_selfrun_list
+            .iter()
+            .map(|x| CString::new(x.clone()).unwrap().into_raw())
+            .collect();
+        if selfrunInitFileList(
+            // TODO this compiles but I don't believe, that this will work
+            converted_main_selfrun_list.as_mut_ptr() as *mut *mut *mut c_char,
+            &mut _main_selfrun_count as *mut i32,
+        ) == 0
+        {
             _main_selfrun_index = 0;
         }
     }
@@ -360,10 +403,10 @@ fn main_exit_system() {
 }
 
 // 0x480D4C
-fn _main_load_new(mapFileName: str) -> i32 {
+fn _main_load_new(mapFileName: String) -> i32 {
     unsafe {
-        _game_user_wants_to_quit = 0;
-        _main_show_death_scene = 0;
+        _game_user_wants_to_quit = false;
+        _main_show_death_scene = false;
         gDude::flags &= /*~*/!ObjectFlags::OBJECT_FLAT;
         objectShow(gDude, NULL);
         mouseHideCursor();
@@ -378,16 +421,20 @@ fn _main_load_new(mapFileName: str) -> i32 {
         );
         windowRefresh(win);
 
-        colorPaletteLoad("color.pal");
+        let color_palette_name: *const c_char =
+            CString::new("color.pal").unwrap().as_ptr() as *const c_char;
+        colorPaletteLoad(color_palette_name);
         paletteFadeTo(_cmap);
         _map_init();
         gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_NONE);
         mouseShowCursor();
         mapLoadByName(mapFileName);
         wmMapMusicStart();
-        paletteFadeTo(gPaletteWhite);
+        paletteFadeTo(gPaletteWhite.as_mut_ptr());
         windowDestroy(win);
-        colorPaletteLoad("color.pal");
+        let color_palette_name: *const c_char =
+            CString::new("color.pal").unwrap().as_ptr() as *const c_char;
+        colorPaletteLoad(color_palette_name);
         paletteFadeTo(_cmap);
     }
     return 0;
@@ -426,7 +473,7 @@ fn main_unload_new() {
 fn mainLoop() {
     unsafe {
         let mut cursorWasHidden: bool = cursorIsHidden();
-        if (cursorWasHidden) {
+        if cursorWasHidden {
             mouseShowCursor();
         }
 
@@ -452,8 +499,9 @@ fn mainLoop() {
                 _main_game_paused = 0;
             }
 
-            if ((gDude::/*->*/data.critter.combat.results & (Dam::DAM_DEAD | Dam::DAM_KNOCKED_OUT))
-                != 0)
+            if (gDude::/*->*/data.critter.combat.results
+                & (Dam::DAM_DEAD as i32 | Dam::DAM_KNOCKED_OUT as i32))
+                != 0
             {
                 endgameSetupDeathEnding(ENDGAME_DEATH_ENDING_REASON_DEATH);
                 _main_show_death_scene = 1;
@@ -466,7 +514,7 @@ fn mainLoop() {
 
         scriptsDisable();
 
-        if (cursorWasHidden) {
+        if cursorWasHidden {
             mouseHideCursor();
         }
     }
@@ -493,7 +541,7 @@ fn _main_selfrun_record() {
 
         let mut fileList: Vec<str>;
         let mut fileListLength: u32 = fileNameListInit("maps\\*.map", &fileList, 0, 0);
-        if (fileListLength != 0) {
+        if fileListLength != 0 {
             let selectedFileIndex: u32 = _win_list_select(
                 "Select Map",
                 fileList,
@@ -509,20 +557,20 @@ fn _main_selfrun_record() {
                 // char recordingName[SELFRUN_RECORDING_FILE_NAME_LENGTH];
                 // recordingName[0] = '\0';
                 let mut recordingName: str = String::new();
-                if (_win_get_str(
+                if _win_get_str(
                     recordingName,
                     sizeof(recordingName) - 2,
                     "Enter name for recording (8 characters max, no extension):",
                     100,
                     100,
-                ) == 0)
+                ) == 0
                 {
                     memset(&selfrunData, 0, sizeof(selfrunData));
-                    if (selfrunPrepareRecording(
+                    if selfrunPrepareRecording(
                         recordingName,
                         fileList[selectedFileIndex],
                         &selfrunData,
-                    ) == 0)
+                    ) == 0
                     {
                         ready = true;
                     }
@@ -531,7 +579,7 @@ fn _main_selfrun_record() {
             fileNameListFree(&fileList, 0);
         }
 
-        if (ready) {
+        if ready {
             mainMenuWindowHide(true);
             mainMenuWindowFree();
             backgroundSoundDelete();
@@ -543,7 +591,7 @@ fn _main_selfrun_record() {
             _proto_dude_init("premade\\combat.gcd");
             _main_load_new(selfrunData.mapFileName);
             selfrunRecordingLoop(&selfrunData);
-            paletteFadeTo(gPaletteWhite);
+            paletteFadeTo(gPaletteWhite.as_mut_ptr());
 
             // NOTE: Uninline.
             main_unload_new();
@@ -567,7 +615,7 @@ fn _main_selfrun_record() {
 // 0x48109C
 fn _main_selfrun_play() {
     unsafe {
-        if (!gMainMenuScreensaverCycle && _main_selfrun_count > 0) {
+        if !gMainMenuScreensaverCycle && _main_selfrun_count > 0 {
             let selfrunData: SelfrunData;
             if (selfrunPreparePlayback(_main_selfrun_list[_main_selfrun_index], &selfrunData) == 0)
             {
@@ -582,7 +630,7 @@ fn _main_selfrun_play() {
                 _proto_dude_init("premade\\combat.gcd");
                 _main_load_new(selfrunData.mapFileName);
                 selfrunPlaybackLoop(&selfrunData);
-                paletteFadeTo(gPaletteWhite);
+                paletteFadeTo(gPaletteWhite.as_mut_ptr());
 
                 // NOTE: Uninline.
                 main_unload_new();
@@ -600,8 +648,8 @@ fn _main_selfrun_play() {
         } else {
             mainMenuWindowHide(true);
             gameMoviePlay(
-                GameMovie::MOVIE_INTRO,
-                GameMovieFlags::GAME_MOVIE_PAUSE_MUSIC,
+                GameMovie::MOVIE_INTRO as i32,
+                GameMovieFlags::GAME_MOVIE_PAUSE_MUSIC as i32,
             );
         }
 
@@ -614,10 +662,10 @@ fn showDeath() {
     unsafe {
         artCacheFlush();
         colorCycleDisable();
-        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_NONE);
+        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_NONE as i32);
 
         let mut oldCursorIsHidden: bool = cursorIsHidden();
-        if (oldCursorIsHidden) {
+        if oldCursorIsHidden {
             mouseShowCursor();
         }
 
@@ -629,11 +677,11 @@ fn showDeath() {
             DEATH_WINDOW_WIDTH,
             DEATH_WINDOW_HEIGHT,
             0,
-            WindowFlags::WINDOW_MOVE_ON_TOP,
+            WindowFlags::WINDOW_MOVE_ON_TOP as i32,
         );
-        if (win != -1) {
+        if win != -1 {
             loop {
-                let mut windowBuffer: *const char = windowGetBuffer(win);
+                let mut windowBuffer: *mut u8 = windowGetBuffer(win);
                 if (windowBuffer == NULL) {
                     break;
                 }
@@ -641,11 +689,11 @@ fn showDeath() {
                 // DEATH.FRM
                 let mut backgroundFrmImage: FrmImage;
                 let fid: i32 = buildFid(ObjectFlags::OBJ_TYPE_INTERFACE, 309, 0, 0, 0);
-                if (!backgroundFrmImage.lock(fid)) {
+                if !backgroundFrmImage.lock(fid) {
                     break;
                 }
 
-                while (mouseGetEvent() != 0) {
+                while mouseGetEvent() != 0 {
                     sharedFpsLimiter.mark();
 
                     inputGetInput();
@@ -667,10 +715,10 @@ fn showDeath() {
                 );
                 backgroundFrmImage.unlock();
 
-                const deathFileName: String = endgameDeathEndingGetFileName();
+                const deathFileName: *mut c_char = endgameDeathEndingGetFileName();
 
                 if (settings.preferences.subtitles) {
-                    let mut text: str;
+                    let mut text: String;
                     if (_mainDeathGrabTextFile(deathFileName, text) == 0) {
                         debugPrint("\n((ShowDeath)): %s\n", text);
 
@@ -690,14 +738,16 @@ fn showDeath() {
 
                 windowRefresh(win);
 
-                colorPaletteLoad("art\\intrface\\death.pal");
+                let color_palette_name: *const c_char =
+                    CString::new("art\\intrface\\death.pal").unwrap().as_ptr() as *const c_char;
+                colorPaletteLoad(color_palette_name);
                 paletteFadeTo(_cmap);
 
                 _main_death_voiceover_done = false;
                 speechSetEndCallback(_main_death_voiceover_callback);
 
                 let mut delay: u32;
-                if (speechLoad(deathFileName, 10, 14, 15) == -1) {
+                if speechLoad(deathFileName, 10, 14, 15) == -1 {
                     delay = 3000;
                 } else {
                     delay = UINT_MAX;
@@ -728,7 +778,7 @@ fn showDeath() {
 
                 speechDelete();
 
-                while (mouseGetEvent() != 0) {
+                while mouseGetEvent() != 0 {
                     sharedFpsLimiter.mark();
 
                     inputGetInput();
@@ -737,21 +787,23 @@ fn showDeath() {
                     sharedFpsLimiter.throttle();
                 }
 
-                if (keyCode == -1) {
+                if keyCode == -1 {
                     inputPauseForTocks(500);
                 }
 
-                paletteFadeTo(gPaletteBlack);
-                colorPaletteLoad("color.pal");
+                paletteFadeTo(gPaletteBlack.as_mut_ptr());
+                let color_palette_name: *const c_char =
+                    CString::new("color.pal").unwrap().as_ptr() as *const c_char;
+                colorPaletteLoad(color_palette_name);
             } //while (0);
             windowDestroy(win);
         }
 
-        if (oldCursorIsHidden) {
+        if oldCursorIsHidden {
             mouseHideCursor();
         }
 
-        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_ARROW);
+        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_ARROW as i32);
 
         colorCycleEnable();
     }
@@ -765,14 +817,14 @@ fn _main_death_voiceover_callback() {
 // Read endgame subtitle.
 //
 // 0x4814B4
-fn _mainDeathGrabTextFile(fileName: str, dest: str) -> i32 {
+fn _mainDeathGrabTextFile(fileName: String, dest: String) -> i32 {
     unsafe {
         let mut p: str = strrchr(fileName, '\\');
         if (p == NULL) {
             return -1;
         }
 
-        let path: str = String::new();
+        let path: String = String::new();
         snprintf(
             path,
             sizeof(path),
@@ -788,17 +840,17 @@ fn _mainDeathGrabTextFile(fileName: str, dest: str) -> i32 {
             return -1;
         }
 
-        while (true) {
-            let mut c: i32 = fileReadChar(stream);
-            if (c == -1) {
+        loop {
+            if false {
                 break;
             }
-
-            if (c == '\n') {
+            let mut c: i32 = fileReadChar(stream);
+            if c == -1 {
+                break;
+            }
+            if c == '\n' {
                 c = ' ';
             }
-
-            // *dest++ = (c & 0xFF);
         }
 
         fileClose(stream);
@@ -815,13 +867,15 @@ fn _mainDeathWordWrap(
     /*short* */ beginnings: i8,
     /*short* */ count: i8,
 ) -> i32 {
-    while (true) {
+    loop {
+        if false {
+            break;
+        }
         let mut sep: str = strchr(text, ':');
         if (sep == NULL) {
             break;
         }
-
-        if (sep - 1 < text) {
+        if sep - 1 < text {
             break;
         }
         sep[0] = ' ';
@@ -852,5 +906,11 @@ fn _mainDeathWordWrap(
 }
 
 fn main() {
+    let stdout = ConsoleAppender::builder().build();
+    let config = Config::builder()
+        .appender(Appender::builder().build("stdout", Box::new(stdout)))
+        .build(Root::builder().appender("stdout").build(LevelFilter::Trace))
+        .unwrap();
+    let _handle = log4rs::init_config(config).unwrap();
     println!("Hello, world!");
 }

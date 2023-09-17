@@ -25,3 +25,6 @@ bindgen = "0.68.1"
 
 [dependencies]
 wasmer = "4.2.0"
+rust-ini = "0.19.0"
+log = "0.4.20"
+log4rs = "1.2.0"

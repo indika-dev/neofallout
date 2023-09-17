@@ -73,6 +73,7 @@ fn assign_defaults(builder: bindgen::Builder) -> bindgen::Builder {
         .clang_arg("c++")
         .clang_arg("-I")
         .clang_arg("/usr/include/SDL2")
+        .clang_arg("-fdeclspec")
         .clang_arg("-fparse-all-comments");
     builder_with_defaults
 }
@@ -131,6 +132,7 @@ fn add_wrapper_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
         .allowlist_type("fallout::Dictionary")
         .allowlist_type("fallout::Config")
         .allowlist_type("fallout::GameMovieFlags")
+        .allowlist_type("fallout::gDude")
         .allowlist_function("fallout::autorunMutexCreate")
         .allowlist_function("fallout::autorunMutexClose")
         .allowlist_function("fallout::colorPaletteLoad")

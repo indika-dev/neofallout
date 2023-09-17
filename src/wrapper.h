@@ -769,4 +769,5 @@ typedef Dictionary Config;
 bool configGetString(Config* config, const char* sectionKey, const char* key, char** valuePtr);
 bool configGetInt(Config* config, const char* sectionKey, const char* key, int* valuePtr, unsigned char base = 0);
 
+extern "C" __declspec(dllimport) Object* gDude;
 }
