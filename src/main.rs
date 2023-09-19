@@ -154,9 +154,6 @@ static mut gPalette: [u8; 256 * 3] = [0; 256 * 3];
 // 0x663CD0
 const gPaletteWhite: [u8; 256 * 3] = [63; 256 * 3];
 
-// 0x663FD0
-const gPaletteBlack: [u8; 256 * 3] = [0; 256 * 3];
-
 // 0x48099C
 fn falloutMain(argc: u32, argv: Vec<String>) -> u32 {
     unsafe {
@@ -200,9 +197,7 @@ fn falloutMain(argc: u32, argv: Vec<String>) -> u32 {
             let mut done: bool = false;
             while !done {
                 keyboardReset();
-                let song_name: *const c_char =
-                    CString::new("07desert").unwrap().as_ptr() as *const c_char;
-                _gsound_background_play_level_music(song_name, 11);
+                _gsound_background_play_level_music(str_to_c_char("07desert"), 11);
                 mainMenuWindowUnhide(true);
 
                 mouseShowCursor();
@@ -269,9 +264,7 @@ fn falloutMain(argc: u32, argv: Vec<String>) -> u32 {
                     // NOTE: Uninline.
                     main_loadgame_new();
 
-                    let color_palette_name: *const c_char =
-                        CString::new("color.pal").unwrap().as_ptr() as *const c_char;
-                    colorPaletteLoad(color_palette_name);
+                    loadColorPalette("color.pal");
                     paletteFadeTo(_cmap);
                     let mut loadGameRc: i32 =
                         lsgLoadGame(LoadSaveMode::LOAD_SAVE_MODE_FROM_MAIN_MENU as i32);
@@ -308,9 +301,7 @@ fn falloutMain(argc: u32, argv: Vec<String>) -> u32 {
                     doPreferences(true);
                 } else if MainMenuOption::MAIN_MENU_CREDITS as i32 == mainMenuRc {
                     mainMenuWindowHide(true);
-                    let credits_txt: *const c_char =
-                        CString::new("credits.txt").unwrap().as_ptr() as *const c_char;
-                    creditsOpen(credits_txt, -1, false);
+                    creditsOpen(str_to_c_char("credits.txt"), -1, false);
                 } else if MainMenuOption::MAIN_MENU_QUOTES as i32 == mainMenuRc {
                     // NOTE: There is a strange cmp at 0x480C50. Both operands are
                     // zero, set before the loop and do not modify afterwards. For
@@ -341,13 +332,12 @@ fn falloutMain(argc: u32, argv: Vec<String>) -> u32 {
 // 0x480CC0
 fn falloutInit(argv: Vec<String>) -> bool {
     unsafe {
-        let title: *const c_char = CString::new("FALLOUT II").unwrap().as_ptr() as *const c_char;
         let mut cmdLineArgs: Vec<*mut c_char> = argv
             .iter()
             .map(|x| CString::new(x.clone()).unwrap().into_raw())
             .collect();
         if gameInitWithOptions(
-            title,
+            str_to_c_char("FALLOUT II"),
             false,
             0,
             0,
@@ -421,9 +411,7 @@ fn _main_load_new(mapFileName: String) -> i32 {
         );
         windowRefresh(win);
 
-        let color_palette_name: *const c_char =
-            CString::new("color.pal").unwrap().as_ptr() as *const c_char;
-        colorPaletteLoad(color_palette_name);
+        loadColorPalette("color.pal");
         paletteFadeTo(_cmap);
         _map_init();
         gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_NONE);
@@ -432,9 +420,7 @@ fn _main_load_new(mapFileName: String) -> i32 {
         wmMapMusicStart();
         paletteFadeTo(gPaletteWhite.as_mut_ptr());
         windowDestroy(win);
-        let color_palette_name: *const c_char =
-            CString::new("color.pal").unwrap().as_ptr() as *const c_char;
-        colorPaletteLoad(color_palette_name);
+        loadColorPalette("color.pal");
         paletteFadeTo(_cmap);
     }
     return 0;
@@ -543,7 +529,7 @@ fn _main_selfrun_record() {
         let mut fileListLength: u32 = fileNameListInit("maps\\*.map", &fileList, 0, 0);
         if fileListLength != 0 {
             let selectedFileIndex: u32 = _win_list_select(
-                "Select Map",
+                str_to_c_char("Select Map"),
                 fileList,
                 fileListLength,
                 0,
@@ -556,7 +542,7 @@ fn _main_selfrun_record() {
                 // fields), but due to the padding it takes 16 chars on stack.
                 // char recordingName[SELFRUN_RECORDING_FILE_NAME_LENGTH];
                 // recordingName[0] = '\0';
-                let mut recordingName: str = String::new();
+                let mut recordingName: &str = "";
                 if _win_get_str(
                     recordingName,
                     sizeof(recordingName) - 2,
@@ -567,7 +553,7 @@ fn _main_selfrun_record() {
                 {
                     memset(&selfrunData, 0, sizeof(selfrunData));
                     if selfrunPrepareRecording(
-                        recordingName,
+                        str_to_c_char(recordingName),
                         fileList[selectedFileIndex],
                         &selfrunData,
                     ) == 0
@@ -588,7 +574,7 @@ fn _main_selfrun_record() {
             // NOTE: Uninline.
             main_reset_system();
 
-            _proto_dude_init("premade\\combat.gcd");
+            _proto_dude_init(str_to_c_char("premade\\combat.gcd"));
             _main_load_new(selfrunData.mapFileName);
             selfrunRecordingLoop(&selfrunData);
             paletteFadeTo(gPaletteWhite.as_mut_ptr());
@@ -627,7 +613,7 @@ fn _main_selfrun_play() {
                 // NOTE: Uninline.
                 main_reset_system();
 
-                _proto_dude_init("premade\\combat.gcd");
+                _proto_dude_init(str_to_c_char("premade\\combat.gcd"));
                 _main_load_new(selfrunData.mapFileName);
                 selfrunPlaybackLoop(&selfrunData);
                 paletteFadeTo(gPaletteWhite.as_mut_ptr());
@@ -720,7 +706,7 @@ fn showDeath() {
                 if (settings.preferences.subtitles) {
                     let mut text: String;
                     if (_mainDeathGrabTextFile(deathFileName, text) == 0) {
-                        debugPrint("\n((ShowDeath)): %s\n", text);
+                        debug!("((ShowDeath)): {}", text);
 
                         // short beginnings[WORD_WRAP_MAX_COUNT];
                         // short count;
@@ -738,9 +724,7 @@ fn showDeath() {
 
                 windowRefresh(win);
 
-                let color_palette_name: *const c_char =
-                    CString::new("art\\intrface\\death.pal").unwrap().as_ptr() as *const c_char;
-                colorPaletteLoad(color_palette_name);
+                loadColorPalette("art\\intrface\\death.pal");
                 paletteFadeTo(_cmap);
 
                 _main_death_voiceover_done = false;
@@ -792,9 +776,7 @@ fn showDeath() {
                 }
 
                 paletteFadeTo(gPaletteBlack.as_mut_ptr());
-                let color_palette_name: *const c_char =
-                    CString::new("color.pal").unwrap().as_ptr() as *const c_char;
-                colorPaletteLoad(color_palette_name);
+                loadColorPalette("color.pal");
             } //while (0);
             windowDestroy(win);
         }
@@ -807,6 +789,18 @@ fn showDeath() {
 
         colorCycleEnable();
     }
+}
+
+fn loadColorPalette(name: &str) {
+    let color_palette_name = str_to_c_char(name);
+    unsafe {
+        colorPaletteLoad(color_palette_name);
+    }
+}
+
+fn str_to_c_char(name: &str) -> *const c_char {
+    let color_palette_name: *const c_char = CString::new(name).unwrap().as_ptr() as *const c_char;
+    color_palette_name
 }
 
 // 0x4814A8
