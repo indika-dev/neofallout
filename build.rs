@@ -133,6 +133,7 @@ fn add_wrapper_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
         .allowlist_type("fallout::Config")
         .allowlist_type("fallout::GameMovieFlags")
         .allowlist_type("fallout::gDude")
+        .allowlist_type("fallout::ObjectTypes")
         .allowlist_function("fallout::autorunMutexCreate")
         .allowlist_function("fallout::autorunMutexClose")
         .allowlist_function("fallout::colorPaletteLoad")
@@ -212,6 +213,7 @@ fn add_wrapper_h_to_bindings(out_path: &PathBuf) -> bindgen::Builder {
         .allowlist_function("fallout::_gsound_background_play_level_music")
         .allowlist_function("fallout::fileNameListFree")
         .allowlist_function("fallout::selfrunPlaybackLoop")
+        .allowlist_function("fallout::buildFid")
         .allowlist_function("fallout::wordWrap");
     write_bindings("fallout2ce_h", &builder, out_path.clone());
     return builder;

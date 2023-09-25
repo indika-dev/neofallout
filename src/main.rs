@@ -10,14 +10,15 @@ use log4rs::{
     Config,
 };
 use std::{
+    env,
     ffi::{c_char, CString},
     fs::File,
     u8,
 };
 
 use neofallout::{
-    autorunMutexCreate, colorPaletteLoad, debugPrint, gameMoviePlay, lsgLoadGame,
-    mainMenuWindowHandleEvents, mainMenuWindowHide, paletteFadeTo, screenGetHeight, screenGetWidth,
+    autorunMutexCreate, colorPaletteLoad, gameMoviePlay, lsgLoadGame, mainMenuWindowHandleEvents,
+    mainMenuWindowHide, paletteFadeTo, screenGetHeight, screenGetWidth,
     sfall_gl_scr_exec_start_proc, windowCreate, windowDestroy, Dam, LoadSaveMode, MainMenuOption,
     MouseCursorType, ObjectFlags, WindowFlags, _map_exit, _map_init, autorunMutexClose,
     backgroundSoundDelete, creditsOpen, cursorIsHidden, doPreferences, endgameSetupDeathEnding,
@@ -28,12 +29,12 @@ use neofallout::{
     artCacheFlush, blitBufferToBuffer, colorCycleDisable, endgameDeathEndingGetFileName,
     inputEventQueueReset, keyboardReset, randomSeedPrerandom, selfrunPreparePlayback,
     selfrunPrepareRecording, selfrunRecordingLoop, windowGetBuffer, FrmImage,
-    _gsound_background_play_level_music, _gsound_speech_play_preloaded, bufferFill,
+    _gsound_background_play_level_music, _gsound_speech_play_preloaded, bufferFill, buildFid,
     characterSelectorOpen, colorCycleEnable, colorCycleEnabled, configGetInt, configGetString,
     fileClose, fileNameListFree, fileOpen, fileReadChar, gameExit, gameMouseSetCursor, gameReset,
     getTicks, inputBlockForTocks, inputPauseForTocks, mainMenuWindowInit, mainMenuWindowUnhide,
     mapLoadByName, mouseGetEvent, selfrunPlaybackLoop, speechDelete, speechLoad,
-    speechSetEndCallback, windowRefresh, wordWrap, GameMovie, GameMovieFlags, Object,
+    speechSetEndCallback, windowRefresh, wordWrap, GameMovie, GameMovieFlags, Object, ObjectTypes,
 };
 
 const SELFRUN_RECORDING_FILE_NAME_LENGTH: i32 = 13;
@@ -128,7 +129,7 @@ static _main_selfrun_list: Vec<String> = Vec::new();
 static _main_selfrun_count: i32 = 0;
 
 // 0x5194E4
-static _main_selfrun_index: u32 = 0;
+static _main_selfrun_index: i32 = 0;
 
 // 0x5194E8
 static _main_show_death_scene: bool = false;
@@ -153,6 +154,8 @@ static mut gPalette: [u8; 256 * 3] = [0; 256 * 3];
 
 // 0x663CD0
 const gPaletteWhite: [u8; 256 * 3] = [63; 256 * 3];
+const gPaletteBlack: [u8; 256 * 3] = [0; 256 * 3];
+static mut _colorTable: [u8; 32768] = [0; 32768];
 
 // 0x48099C
 fn falloutMain(argc: u32, argv: Vec<String>) -> u32 {
@@ -228,7 +231,7 @@ fn falloutMain(argc: u32, argv: Vec<String>) -> u32 {
                             _mainMap,
                         );
 
-                        _main_load_new(mapName.to_string());
+                        _main_load_new(mapName);
 
                         // SFALL: AfterNewGameStartHook.
                         sfall_gl_scr_exec_start_proc();
@@ -264,7 +267,7 @@ fn falloutMain(argc: u32, argv: Vec<String>) -> u32 {
                     // NOTE: Uninline.
                     main_loadgame_new();
 
-                    loadColorPalette("color.pal");
+                    rs_loadColorPalette("color.pal");
                     paletteFadeTo(_cmap);
                     let mut loadGameRc: i32 =
                         lsgLoadGame(LoadSaveMode::LOAD_SAVE_MODE_FROM_MAIN_MENU as i32);
@@ -352,13 +355,9 @@ fn falloutInit(argv: Vec<String>) -> bool {
             _main_selfrun_exit();
         }
 
-        let mut converted_main_selfrun_list: Vec<*mut c_char> = _main_selfrun_list
-            .iter()
-            .map(|x| CString::new(x.clone()).unwrap().into_raw())
-            .collect();
         if selfrunInitFileList(
             // TODO this compiles but I don't believe, that this will work
-            converted_main_selfrun_list.as_mut_ptr() as *mut *mut *mut c_char,
+            vec_str_to_mut_mut_mut_c_char(_main_selfrun_list),
             &mut _main_selfrun_count as *mut i32,
         ) == 0
         {
@@ -393,7 +392,7 @@ fn main_exit_system() {
 }
 
 // 0x480D4C
-fn _main_load_new(mapFileName: String) -> i32 {
+fn _main_load_new(mapFileName: &str) -> i32 {
     unsafe {
         _game_user_wants_to_quit = false;
         _main_show_death_scene = false;
@@ -406,21 +405,21 @@ fn _main_load_new(mapFileName: String) -> i32 {
             0,
             screenGetWidth(),
             screenGetHeight(),
-            _colorTable[0],
-            WindowFlags::WINDOW_MODAL | WindowFlags::WINDOW_MOVE_ON_TOP,
+            _colorTable[0] as i32,
+            WindowFlags::WINDOW_MODAL as i32 | WindowFlags::WINDOW_MOVE_ON_TOP as i32,
         );
         windowRefresh(win);
 
-        loadColorPalette("color.pal");
+        rs_loadColorPalette("color.pal");
         paletteFadeTo(_cmap);
         _map_init();
-        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_NONE);
+        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_NONE as i32);
         mouseShowCursor();
-        mapLoadByName(mapFileName);
+        mapLoadByName(str_to_mut_c_char(mapFileName));
         wmMapMusicStart();
         paletteFadeTo(gPaletteWhite.as_mut_ptr());
         windowDestroy(win);
-        loadColorPalette("color.pal");
+        rs_loadColorPalette("color.pal");
         paletteFadeTo(_cmap);
     }
     return 0;
@@ -431,8 +430,8 @@ fn _main_load_new(mapFileName: String) -> i32 {
 // 0x480DF8
 fn main_loadgame_new() -> i32 {
     unsafe {
-        _game_user_wants_to_quit = 0;
-        _main_show_death_scene = 0;
+        _game_user_wants_to_quit = false;
+        _main_show_death_scene = false;
 
         gDude::flags &= /*~*/!ObjectFlags::OBJECT_FLAT;
 
@@ -441,7 +440,7 @@ fn main_loadgame_new() -> i32 {
 
         _map_init();
 
-        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_NONE);
+        gameMouseSetCursor(MouseCursorType::MOUSE_CURSOR_NONE as i32);
         mouseShowCursor();
     }
     return 0;
@@ -463,11 +462,11 @@ fn mainLoop() {
             mouseShowCursor();
         }
 
-        _main_game_paused = 0;
+        _main_game_paused = false;
 
         scriptsEnable();
 
-        while (_game_user_wants_to_quit == 0) {
+        while !_game_user_wants_to_quit {
             sharedFpsLimiter.mark();
 
             let keyCode: i32 = inputGetInput();
@@ -481,8 +480,8 @@ fn mainLoop() {
 
             mapHandleTransition();
 
-            if (_main_game_paused != 0) {
-                _main_game_paused = 0;
+            if _main_game_paused {
+                _main_game_paused = false;
             }
 
             if (gDude::/*->*/data.critter.combat.results
@@ -490,8 +489,8 @@ fn mainLoop() {
                 != 0
             {
                 endgameSetupDeathEnding(ENDGAME_DEATH_ENDING_REASON_DEATH);
-                _main_show_death_scene = 1;
-                _game_user_wants_to_quit = 2;
+                _main_show_death_scene = true;
+                _game_user_wants_to_quit = true; //2;
             }
 
             renderPresent();
@@ -509,13 +508,12 @@ fn mainLoop() {
 // 0x480F38
 fn _main_selfrun_exit() {
     unsafe {
-        if (_main_selfrun_list != NULL) {
-            selfrunFreeFileList(&_main_selfrun_list);
+        if !_main_selfrun_list.is_empty() {
+            _main_selfrun_list.clear();
         }
 
         _main_selfrun_count = 0;
         _main_selfrun_index = 0;
-        _main_selfrun_list = NULL;
     }
 }
 
@@ -525,10 +523,10 @@ fn _main_selfrun_record() {
         let selfrunData: SelfrunData;
         let mut ready: bool = false;
 
-        let mut fileList: Vec<str>;
+        let mut fileList: Vec<String>;
         let mut fileListLength: u32 = fileNameListInit("maps\\*.map", &fileList, 0, 0);
         if fileListLength != 0 {
-            let selectedFileIndex: u32 = _win_list_select(
+            let selectedFileIndex: i32 = _win_list_select(
                 str_to_c_char("Select Map"),
                 fileList,
                 fileListLength,
@@ -537,32 +535,32 @@ fn _main_selfrun_record() {
                 80,
                 0x10000 | 0x100 | 4,
             );
-            if (selectedFileIndex != -1) {
+            if selectedFileIndex != -1 {
                 // NOTE: It's size is likely 13 chars (on par with SelfrunData
                 // fields), but due to the padding it takes 16 chars on stack.
                 // char recordingName[SELFRUN_RECORDING_FILE_NAME_LENGTH];
                 // recordingName[0] = '\0';
-                let mut recordingName: &str = "";
+                let mut recordingName: String = String::from("");
                 if _win_get_str(
                     recordingName,
-                    sizeof(recordingName) - 2,
+                    recordingName.len() - 2,
                     "Enter name for recording (8 characters max, no extension):",
                     100,
                     100,
                 ) == 0
                 {
-                    memset(&selfrunData, 0, sizeof(selfrunData));
+                    // memset(&selfrunData, 0, selfrunData. sizeof(selfrunData)); -- initialization of memory
                     if selfrunPrepareRecording(
-                        str_to_c_char(recordingName),
-                        fileList[selectedFileIndex],
-                        &selfrunData,
+                        str_to_c_char(recordingName.as_str()),
+                        fileList.get(selectedFileIndex),
+                        selfrunData,
                     ) == 0
                     {
                         ready = true;
                     }
                 }
             }
-            fileNameListFree(&fileList, 0);
+            fileNameListFree(vec_str_to_mut_mut_mut_c_char(fileList), 0);
         }
 
         if ready {
@@ -628,7 +626,7 @@ fn _main_selfrun_play() {
             }
 
             _main_selfrun_index += 1;
-            if (_main_selfrun_index >= _main_selfrun_count) {
+            if _main_selfrun_index >= _main_selfrun_count {
                 _main_selfrun_index = 0;
             }
         } else {
@@ -674,7 +672,7 @@ fn showDeath() {
 
                 // DEATH.FRM
                 let mut backgroundFrmImage: FrmImage;
-                let fid: i32 = buildFid(ObjectFlags::OBJ_TYPE_INTERFACE, 309, 0, 0, 0);
+                let fid: i32 = buildFid(ObjectTypes::OBJ_TYPE_INTERFACE as i32, 309, 0, 0, 0);
                 if !backgroundFrmImage.lock(fid) {
                     break;
                 }
@@ -724,7 +722,7 @@ fn showDeath() {
 
                 windowRefresh(win);
 
-                loadColorPalette("art\\intrface\\death.pal");
+                rs_loadColorPalette("art\\intrface\\death.pal");
                 paletteFadeTo(_cmap);
 
                 _main_death_voiceover_done = false;
@@ -776,7 +774,7 @@ fn showDeath() {
                 }
 
                 paletteFadeTo(gPaletteBlack.as_mut_ptr());
-                loadColorPalette("color.pal");
+                rs_loadColorPalette("color.pal");
             } //while (0);
             windowDestroy(win);
         }
@@ -791,15 +789,28 @@ fn showDeath() {
     }
 }
 
-fn loadColorPalette(name: &str) {
+fn rs_loadColorPalette(name: &str) {
     let color_palette_name = str_to_c_char(name);
     unsafe {
         colorPaletteLoad(color_palette_name);
     }
 }
 
+fn vec_str_to_mut_mut_mut_c_char(list: Vec<String>) -> *mut *mut *mut c_char {
+    let mut converted_main_selfrun_list: Vec<*mut c_char> = _main_selfrun_list
+        .iter()
+        .map(|x| CString::new(x.clone()).unwrap().into_raw())
+        .collect();
+    converted_main_selfrun_list.as_mut_ptr() as *mut *mut *mut c_char
+}
+
 fn str_to_c_char(name: &str) -> *const c_char {
     let color_palette_name: *const c_char = CString::new(name).unwrap().as_ptr() as *const c_char;
+    color_palette_name
+}
+
+fn str_to_mut_c_char(name: &str) -> *mut c_char {
+    let color_palette_name: *mut c_char = CString::new(name).unwrap().as_ptr() as *mut c_char;
     color_palette_name
 }
 
@@ -907,4 +918,6 @@ fn main() {
         .unwrap();
     let _handle = log4rs::init_config(config).unwrap();
     println!("Hello, world!");
+    let args: Vec<String> = env::args().collect();
+    falloutMain(args.len() as u32, args);
 }

@@ -183,6 +183,22 @@ typedef enum Dam {
     DAM_CRIP = DAM_CRIP_LEG_ANY | DAM_CRIP_ARM_ANY | DAM_BLIND,
 } Dam;
 
+// anonymous enum
+typedef enum ObjectTypes {
+    OBJ_TYPE_ITEM = 0,
+    OBJ_TYPE_CRITTER = 1,
+    OBJ_TYPE_SCENERY = 2,
+    OBJ_TYPE_WALL = 3,
+    OBJ_TYPE_TILE = 4,
+    OBJ_TYPE_MISC = 5,
+    OBJ_TYPE_INTERFACE = 6,
+    OBJ_TYPE_INVENTORY = 7,
+    OBJ_TYPE_HEAD = 8,
+    OBJ_TYPE_BACKGROUND = 9,
+    OBJ_TYPE_SKILLDEX = 10,
+    OBJ_TYPE_COUNT = 11,
+} ObjectTypes;
+
 typedef enum ObjectFlags {
     OBJECT_HIDDEN = 0x01,
 
@@ -686,6 +702,7 @@ private:
 };
 
 int artCacheFlush();
+int buildFid(int objectType, int frmId, int animType, int a4, int rotation);
 
 /*
 from draw.h
@@ -769,5 +786,5 @@ typedef Dictionary Config;
 bool configGetString(Config* config, const char* sectionKey, const char* key, char** valuePtr);
 bool configGetInt(Config* config, const char* sectionKey, const char* key, int* valuePtr, unsigned char base = 0);
 
-extern "C" __declspec(dllimport) Object* gDude;
+// extern "C" __declspec(dllimport) Object* gDude;
 }
